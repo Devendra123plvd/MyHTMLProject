@@ -1,0 +1,908 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Lakeview Student Registration</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..800&family=Instrument+Sans:wght@400..700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Basic reset (needed when the page is opened on its own) */
+:root { color-scheme: light; }
+body { margin: 0; }
+img { max-width: 100%; }
+[hidden] { display: none !important; }
+
+/* Layout: a dark side panel with a live student ID card and step rail, beside a stepped form that fills the card as you type. */
+:root {
+  --bg: #EAF1F3;
+  --surface: #FFFFFF;
+  --field: #F5F9FA;
+  --ink: #10222B;
+  --muted: #566B75;
+  --line: #D3DFE4;
+  --accent: #0B7A75;
+  --accent-ink: #FFFFFF;
+  --accent-soft: #DCF1EE;
+  --panel: #0C2E33;
+  --panel-ink: #E6F4F2;
+  --panel-muted: #8FB3B2;
+  --panel-line: #1F4A4E;
+  --highlight: #F2B632;
+  --bad: #B3261E;
+  --bad-soft: #FCE9E7;
+  --good: #1B7A43;
+  --shadow: rgba(16, 34, 43, 0.28);
+  --card-bg: #F7FBFA;
+  --card-ink: #10222B;
+  --display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --body: "Instrument Sans", "Segoe UI", system-ui, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #081418;
+    --surface: #0F2227;
+    --field: #142C32;
+    --ink: #E5F0F2;
+    --muted: #92AAB3;
+    --line: #25434B;
+    --accent: #3CC4BB;
+    --accent-ink: #052120;
+    --accent-soft: #12393B;
+    --panel: #06191D;
+    --panel-ink: #E6F4F2;
+    --panel-muted: #7FA5A4;
+    --panel-line: #1A4247;
+    --highlight: #F2B632;
+    --bad: #FF8E86;
+    --bad-soft: #3A1B1A;
+    --good: #5FD395;
+    --shadow: rgba(0, 0, 0, 0.6);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #081418;
+  --surface: #0F2227;
+  --field: #142C32;
+  --ink: #E5F0F2;
+  --muted: #92AAB3;
+  --line: #25434B;
+  --accent: #3CC4BB;
+  --accent-ink: #052120;
+  --accent-soft: #12393B;
+  --panel: #06191D;
+  --panel-ink: #E6F4F2;
+  --panel-muted: #7FA5A4;
+  --panel-line: #1A4247;
+  --highlight: #F2B632;
+  --bad: #FF8E86;
+  --bad-soft: #3A1B1A;
+  --good: #5FD395;
+  --shadow: rgba(0, 0, 0, 0.6);
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font: 15px/1.5 var(--body);
+  padding-block: clamp(12px, 3vw, 36px);
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+h1, h2, h3, p { margin: 0; }
+button, input, select { font: inherit; color: inherit; }
+
+.shell {
+  max-width: 1120px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: minmax(0, 360px) minmax(0, 1fr);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  overflow: hidden;
+  box-shadow: 0 30px 60px -40px var(--shadow);
+}
+
+/* ---------- Side panel ---------- */
+.side {
+  background: var(--panel);
+  color: var(--panel-ink);
+  padding: 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+  min-width: 0;
+}
+.brand { display: flex; align-items: center; gap: 12px; }
+.brand svg { flex: none; }
+.brand b { display: block; font: 700 17px/1.15 var(--display); letter-spacing: 0.01em; }
+.brand small { display: block; font: 500 11px/1.4 var(--mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--panel-muted); }
+
+.idcard {
+  background: var(--card-bg);
+  color: var(--card-ink);
+  border-radius: 14px;
+  overflow: hidden;
+  transform: rotate(-1.6deg);
+  box-shadow: 0 18px 30px -18px rgba(0, 0, 0, 0.7);
+  transition: transform 0.3s ease;
+}
+.idcard:hover { transform: rotate(0deg); }
+.idtop {
+  display: flex; justify-content: space-between; gap: 8px;
+  padding: 9px 14px;
+  background: var(--highlight);
+  color: #10222B;
+  font: 600 10.5px/1.2 var(--mono);
+  letter-spacing: 0.1em;
+}
+.idbody { display: flex; gap: 14px; padding: 16px 14px 12px; align-items: center; }
+.idphoto {
+  flex: none; width: 82px; height: 102px; border-radius: 8px;
+  background: #D9E9E7; display: grid; place-items: center; overflow: hidden; position: relative;
+}
+.idphoto span { font: 700 30px/1 var(--display); color: #0B7A75; }
+.idphoto img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.idinfo { min-width: 0; display: grid; gap: 4px; }
+.idname { font: 700 19px/1.15 var(--display); overflow-wrap: anywhere; }
+.idprog { font-size: 12.5px; line-height: 1.35; color: #3E545E; }
+.idmode { font: 500 10.5px/1.3 var(--mono); letter-spacing: 0.06em; text-transform: uppercase; color: #0B7A75; min-height: 1.3em; }
+.idfoot { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 14px 14px; border-top: 1px dashed #B9CCD1; }
+.idno { font: 500 13px/1 var(--mono); letter-spacing: 0.05em; }
+.bars {
+  flex: none; width: 74px; height: 22px;
+  background: repeating-linear-gradient(90deg, #10222B 0 2px, transparent 2px 4px, #10222B 4px 5px, transparent 5px 8px);
+}
+
+.rail { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.rail li { display: flex; gap: 14px; align-items: center; padding: 10px 0; position: relative; color: var(--panel-muted); }
+.rail li + li::before {
+  content: ""; position: absolute; left: 15px; top: -14px; height: 18px; width: 2px; background: var(--panel-line);
+}
+.dot {
+  flex: none; width: 32px; height: 32px; border-radius: 50%;
+  display: grid; place-items: center;
+  border: 2px solid var(--panel-line);
+  font: 600 13px/1 var(--mono);
+  background: var(--panel);
+}
+.lbl b { display: block; font: 600 15px/1.2 var(--display); color: inherit; }
+.lbl small { font-size: 12.5px; }
+.rail li.current { color: var(--panel-ink); }
+.rail li.current .dot { border-color: var(--highlight); color: var(--highlight); }
+.rail li.done { color: var(--panel-ink); }
+.rail li.done .dot { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.rail li.done + li::before, .rail li.current::before { background: var(--accent); }
+.sidenote { margin-top: auto; font-size: 12.5px; line-height: 1.5; color: var(--panel-muted); }
+
+/* ---------- Main ---------- */
+.main { padding: clamp(22px, 4vw, 40px); min-width: 0; }
+.head { display: grid; gap: 6px; margin-bottom: 26px; }
+.eyebrow { font: 500 12px/1.2 var(--mono); letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent); }
+.head h1 { font: 700 clamp(26px, 4vw, 34px)/1.1 var(--display); letter-spacing: -0.01em; text-wrap: balance; outline: none; }
+.head p { color: var(--muted); max-width: 56ch; }
+
+.step { animation: rise 0.28s ease both; }
+@keyframes rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) {
+  .step { animation: none; }
+  .idcard { transition: none; }
+}
+
+.grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px 16px; }
+.span2 { grid-column: 1 / -1; }
+.group-title {
+  grid-column: 1 / -1; margin-top: 8px; padding-top: 18px; border-top: 1px solid var(--line);
+  font: 600 13px/1.2 var(--mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted);
+}
+.group-title:first-child { margin-top: 0; padding-top: 0; border-top: 0; }
+
+.field { display: grid; gap: 6px; align-content: start; min-width: 0; }
+.field > label, .field > .legend { font-weight: 600; font-size: 13.5px; }
+.field .req { color: var(--bad); }
+.hint { font-size: 12.5px; color: var(--muted); }
+.err { font-size: 12.5px; color: var(--bad); min-height: 0; }
+.err:empty { display: none; }
+
+input[type="text"], input[type="email"], input[type="tel"], input[type="date"], input[type="number"], select {
+  width: 100%; min-height: 46px; padding: 10px 13px;
+  background: var(--field); border: 1.5px solid var(--line); border-radius: 10px;
+  transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
+}
+input::placeholder { color: color-mix(in srgb, var(--muted) 70%, transparent); }
+input:hover, select:hover { border-color: color-mix(in srgb, var(--accent) 45%, var(--line)); }
+input:focus-visible, select:focus-visible {
+  outline: none; border-color: var(--accent); background: var(--surface);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 28%, transparent);
+}
+.invalid input, .invalid select { border-color: var(--bad); background: var(--bad-soft); }
+.invalid .pill span { border-color: var(--bad); }
+
+.pills { display: flex; flex-wrap: wrap; gap: 10px; }
+.pill, .chip { position: relative; display: inline-flex; }
+.pill input, .chip input { position: absolute; inset: 0; opacity: 0; margin: 0; cursor: pointer; width: 100%; height: 100%; }
+.pill span, .chip span {
+  display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 8px 16px;
+  border: 1.5px solid var(--line); border-radius: 10px; background: var(--field);
+  font-weight: 500; transition: all 0.15s; user-select: none;
+}
+.chip span { min-height: 38px; padding: 6px 14px; border-radius: 999px; font-size: 14px; }
+.pill input:hover + span, .chip input:hover + span { border-color: var(--accent); }
+.pill input:checked + span, .chip input:checked + span {
+  background: var(--accent); border-color: var(--accent); color: var(--accent-ink); font-weight: 600;
+}
+.pill input:focus-visible + span, .chip input:focus-visible + span, .check input:focus-visible + .box {
+  outline: 3px solid color-mix(in srgb, var(--accent) 45%, transparent); outline-offset: 2px;
+}
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+
+.photo { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+.avatar {
+  width: 72px; height: 72px; border-radius: 50%; flex: none; overflow: hidden;
+  background: var(--accent-soft); display: grid; place-items: center; color: var(--accent);
+  border: 1.5px dashed var(--accent);
+}
+.avatar img { width: 100%; height: 100%; object-fit: cover; }
+
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  min-height: 46px; padding: 10px 22px; border-radius: 10px; border: 1.5px solid transparent;
+  font-weight: 600; cursor: pointer; transition: transform 0.1s, background 0.15s, border-color 0.15s;
+}
+.btn:active { transform: translateY(1px); }
+.btn:focus-visible { outline: 3px solid color-mix(in srgb, var(--accent) 45%, transparent); outline-offset: 2px; }
+.btn-primary { background: var(--accent); color: var(--accent-ink); }
+.btn-primary:hover { background: color-mix(in srgb, var(--accent) 88%, var(--ink)); }
+.btn-ghost { background: transparent; border-color: var(--line); color: var(--ink); }
+.btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+.btn-small { min-height: 38px; padding: 6px 16px; font-size: 14px; }
+.actions { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 30px; padding-top: 22px; border-top: 1px solid var(--line); }
+.actions .spacer { flex: 1; }
+
+/* Review */
+.review { display: grid; gap: 18px; }
+.rsec { border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+.rsec header { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 12px 16px; background: var(--field); border-bottom: 1px solid var(--line); }
+.rsec h2 { font: 700 16px/1.2 var(--display); }
+.link-btn { background: none; border: 0; padding: 6px 4px; color: var(--accent); font-weight: 600; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
+.link-btn:focus-visible { outline: 3px solid color-mix(in srgb, var(--accent) 45%, transparent); border-radius: 4px; }
+.rsec dl { margin: 0; display: grid; grid-template-columns: minmax(110px, 170px) minmax(0, 1fr); }
+.rsec dt, .rsec dd { margin: 0; padding: 10px 16px; border-bottom: 1px solid var(--line); }
+.rsec dt { color: var(--muted); font-size: 13.5px; }
+.rsec dd { font-weight: 500; overflow-wrap: anywhere; }
+.rsec dt:nth-last-of-type(1), .rsec dd:last-of-type { border-bottom: 0; }
+
+.check { display: flex; gap: 12px; align-items: flex-start; cursor: pointer; position: relative; }
+.check input { position: absolute; opacity: 0; width: 22px; height: 22px; margin: 0; cursor: pointer; }
+.check .box {
+  flex: none; width: 22px; height: 22px; border-radius: 6px; margin-top: 1px;
+  border: 1.5px solid var(--line); background: var(--field); display: grid; place-items: center; transition: all 0.15s;
+}
+.check .box svg { opacity: 0; width: 14px; height: 14px; }
+.check input:checked + .box { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.check input:checked + .box svg { opacity: 1; }
+.invalid .check .box { border-color: var(--bad); }
+.check .txt { font-size: 14px; color: var(--muted); }
+
+/* Success */
+.success { display: grid; gap: 22px; justify-items: start; animation: rise 0.35s ease both; }
+.tick { width: 58px; height: 58px; border-radius: 50%; display: grid; place-items: center; background: var(--accent); color: var(--accent-ink); }
+.regno {
+  display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+  padding: 14px 18px; border: 1.5px dashed var(--accent); border-radius: 12px; background: var(--accent-soft);
+}
+.regno code { font: 500 22px/1 var(--mono); letter-spacing: 0.06em; }
+.regno small { display: block; font: 500 11px/1.2 var(--mono); letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
+.success .rsec { width: 100%; }
+
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* ---------- Responsive ---------- */
+@media (max-width: 900px) {
+  .shell { grid-template-columns: minmax(0, 1fr); }
+  .side { padding: 20px; gap: 18px; }
+  .idcard { display: none; }
+  .shell.done .idcard { display: block; max-width: 360px; transform: none; }
+  .rail { grid-auto-flow: column; grid-auto-columns: 1fr; gap: 8px; }
+  .rail li { flex-direction: column; text-align: center; gap: 6px; padding: 0; align-items: center; }
+  .rail li + li::before { display: none; }
+  .lbl small { display: none; }
+  .lbl b { font-size: 13px; }
+  .sidenote { display: none; }
+}
+@media (max-width: 620px) {
+  .grid { grid-template-columns: minmax(0, 1fr); }
+  .rsec dl { grid-template-columns: minmax(0, 1fr); }
+  .rsec dt { border-bottom: 0; padding-bottom: 0; }
+  .actions .btn { flex: 1; }
+}
+</style>
+</head>
+<body>
+<div class="shell" id="shell">
+  <aside class="side">
+    <div class="brand">
+      <svg width="38" height="38" viewBox="0 0 38 38" aria-hidden="true">
+        <rect width="38" height="38" rx="9" fill="#F2B632"/>
+        <path d="M6 22c4-5 7-5 11 0s7 5 11 0 4-3 4-3" fill="none" stroke="#0C2E33" stroke-width="3" stroke-linecap="round"/>
+        <path d="M6 29c4-5 7-5 11 0s7 5 11 0 4-3 4-3" fill="none" stroke="#0C2E33" stroke-width="3" stroke-linecap="round" opacity=".45"/>
+        <circle cx="26" cy="11" r="3.5" fill="#0C2E33"/>
+      </svg>
+      <div><b>Lakeview College</b><small>Student registration · Batch 2027</small></div>
+    </div>
+
+    <div class="idcard" id="idcard">
+      <div class="idtop"><span>LAKEVIEW COLLEGE</span><span>BATCH 2027</span></div>
+      <div class="idbody">
+        <div class="idphoto"><span id="cardInitials">?</span><img id="cardImg" alt="" hidden></div>
+        <div class="idinfo">
+          <p class="idname" id="cardName">Your name</p>
+          <p class="idprog" id="cardProgram">Programme not chosen yet</p>
+          <p class="idmode" id="cardMode"></p>
+        </div>
+      </div>
+      <div class="idfoot"><span class="idno" id="cardId">LVC-27-•••••</span><i class="bars"></i></div>
+    </div>
+
+    <ol class="rail" id="rail">
+      <li data-step="0"><span class="dot">1</span><span class="lbl"><b>Personal details</b><small>Identity and contact</small></span></li>
+      <li data-step="1"><span class="dot">2</span><span class="lbl"><b>Academics</b><small>Programme and last exam</small></span></li>
+      <li data-step="2"><span class="dot">3</span><span class="lbl"><b>Review</b><small>Check and submit</small></span></li>
+    </ol>
+
+    <p class="sidenote">Registration is free. Fields marked <b>*</b> are required. Your ID card updates as you type.</p>
+  </aside>
+
+  <main class="main" id="main">
+    <div id="formWrap">
+      <div class="head">
+        <p class="eyebrow" id="eyebrow">Step 1 of 3</p>
+        <h1 id="title" tabindex="-1">Tell us about yourself</h1>
+        <p id="lead">Use your name exactly as it appears on your previous marksheet.</p>
+      </div>
+
+      <form id="reg" novalidate autocomplete="on">
+        <!-- STEP 1 -->
+        <section class="step" data-step="0">
+          <div class="grid">
+            <div class="field" data-field="firstName">
+              <label for="firstName">First name <span class="req">*</span></label>
+              <input type="text" id="firstName" name="firstName" autocomplete="given-name" placeholder="e.g. Ananya" aria-describedby="firstName-err">
+              <p class="err" id="firstName-err" role="alert"></p>
+            </div>
+            <div class="field" data-field="lastName">
+              <label for="lastName">Last name <span class="req">*</span></label>
+              <input type="text" id="lastName" name="lastName" autocomplete="family-name" placeholder="e.g. Reddy" aria-describedby="lastName-err">
+              <p class="err" id="lastName-err" role="alert"></p>
+            </div>
+            <div class="field" data-field="dob">
+              <label for="dob">Date of birth <span class="req">*</span></label>
+              <input type="date" id="dob" name="dob" autocomplete="bday" aria-describedby="dob-err">
+              <p class="err" id="dob-err" role="alert"></p>
+            </div>
+            <div class="field" data-field="gender">
+              <span class="legend" id="gender-l">Gender <span class="req">*</span></span>
+              <div class="pills" role="radiogroup" aria-labelledby="gender-l" aria-describedby="gender-err">
+                <label class="pill"><input type="radio" name="gender" value="Female"><span>Female</span></label>
+                <label class="pill"><input type="radio" name="gender" value="Male"><span>Male</span></label>
+                <label class="pill"><input type="radio" name="gender" value="Other"><span>Other</span></label>
+              </div>
+              <p class="err" id="gender-err" role="alert"></p>
+            </div>
+            <div class="field" data-field="email">
+              <label for="email">Email address <span class="req">*</span></label>
+              <input type="email" id="email" name="email" autocomplete="email" placeholder="name@example.com" aria-describedby="email-err">
+              <p class="err" id="email-err" role="alert"></p>
+            </div>
+            <div class="field" data-field="phone">
+              <label for="phone">Mobile number <span class="req">*</span></label>
+              <input type="tel" id="phone" name="phone" inputmode="numeric" autocomplete="tel-national" placeholder="10-digit number" data-digits="10" aria-describedby="phone-err">
+              <p class="err" id="phone-err" role="alert"></p>
+            </div>
+
+            <div class="field span2">
+              <span class="legend">Passport-size photo</span>
+              <div class="photo">
+                <div class="avatar" id="avatar" aria-hidden="true">
+                  <svg id="avatarIcon" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c1-4 4-6 8-6s7 2 8 6"/></svg>
+                  <img id="avatarImg" alt="" hidden>
+                </div>
+                <div style="display:grid;gap:6px;">
+                  <div>
+                    <input type="file" id="photo" name="photo" accept="image/png,image/jpeg,image/webp" class="sr" aria-describedby="photo-hint photo-err">
+                    <label for="photo" class="btn btn-ghost btn-small" id="photoBtn" tabindex="0">Choose photo</label>
+                  </div>
+                  <p class="hint" id="photo-hint">Optional. JPG, PNG or WebP, up to 2 MB.</p>
+                  <p class="err" id="photo-err" role="alert"></p>
+                </div>
+              </div>
+            </div>
+
+            <h2 class="group-title">Guardian</h2>
+            <div class="field" data-field="guardian">
+              <label for="guardian">Parent or guardian name <span class="req">*</span></label>
+              <input type="text" id="guardian" name="guardian" placeholder="Full name" aria-describedby="guardian-err">
+              <p class="err" id="guardian-err" role="alert"></p>
+            </div>
+            <div class="field" data-field="guardianPhone">
+              <label for="guardianPhone">Guardian mobile <span class="req">*</span></label>
+              <input type="tel" id="guardianPhone" name="guardianPhone" inputmode="numeric" placeholder="10-digit number" data-digits="10" aria-describedby="guardianPhone-err">
+              <p class="err" id="guardianPhone-err" role="alert"></p>
+            </div>
+
+            <h2 class="group-title">Address</h2>
+            <div class="field span2" data-field="address">
+              <label for="address">Street address <span class="req">*</span></label>
+              <input type="text" id="address" name="address" autocomplete="street-address" placeholder="House no., street, area" aria-describedby="address-err">
+              <p class="err" id="address-err" role="alert"></p>
+            </div>
+            <div class="field" data-field="city">
+              <label for="city">City or town <span class="req">*</span></label>
+              <input type="text" id="city" name="city" autocomplete="address-level2" aria-describedby="city-err">
+              <p class="err" id="city-err" role="alert"></p>
+            </div>
+            <div class="field" data-field="state">
+              <label for="state">State <span class="req">*</span></label>
+              <select id="state" name="state" autocomplete="address-level1" aria-describedby="state-err"><option value="">Select state</option></select>
+              <p class="err" id="state-err" role="alert"></p>
+            </div>
+            <div class="field" data-field="pin">
+              <label for="pin">PIN code <span class="req">*</span></label>
+              <input type="text" id="pin" name="pin" inputmode="numeric" autocomplete="postal-code" placeholder="6 digits" data-digits="6" aria-describedby="pin-err">
+              <p class="err" id="pin-err" role="alert"></p>
+            </div>
+          </div>
+        </section>
+
+        <!-- STEP 2 -->
+        <section class="step" data-step="1" hidden>
+          <div class="grid">
+            <h2 class="group-title">Programme</h2>
+            <div class="field span2" data-field="program">
+              <label for="program">Programme applied for <span class="req">*</span></label>
+              <select id="program" name="program" aria-describedby="program-err">
+                <option value="">Select a programme</option>
+                <option>B.Tech, Computer Science &amp; Engineering</option>
+                <option>B.Tech, Electronics &amp; Communication</option>
+                <option>B.Sc, Computer Science</option>
+                <option>B.Sc, Mathematics</option>
+                <option>BCA, Computer Applications</option>
+                <option>B.Com, Commerce</option>
+                <option>BBA, Business Administration</option>
+                <option>B.A., Economics</option>
+              </select>
+              <p class="err" id="program-err" role="alert"></p>
+            </div>
+            <div class="field span2" data-field="mode">
+              <span class="legend" id="mode-l">Accommodation <span class="req">*</span></span>
+              <div class="pills" role="radiogroup" aria-labelledby="mode-l" aria-describedby="mode-err">
+                <label class="pill"><input type="radio" name="mode" value="Day scholar"><span>Day scholar</span></label>
+                <label class="pill"><input type="radio" name="mode" value="Hostel"><span>Hostel</span></label>
+              </div>
+              <p class="err" id="mode-err" role="alert"></p>
+            </div>
+
+            <h2 class="group-title">Previous education</h2>
+            <div class="field" data-field="qualification">
+              <label for="qualification">Qualification <span class="req">*</span></label>
+              <select id="qualification" name="qualification" aria-describedby="qualification-err">
+                <option value="">Select</option>
+                <option>Intermediate / Class 12</option>
+                <option>Diploma</option>
+                <option>Other equivalent</option>
+              </select>
+              <p class="err" id="qualification-err" role="alert"></p>
+            </div>
+            <div class="field" data-field="passYear">
+              <label for="passYear">Year of passing <span class="req">*</span></label>
+              <select id="passYear" name="passYear" aria-describedby="passYear-err"><option value="">Select year</option></select>
+              <p class="err" id="passYear-err" role="alert"></p>
+            </div>
+            <div class="field span2" data-field="institute">
+              <label for="institute">School or college attended <span class="req">*</span></label>
+              <input type="text" id="institute" name="institute" placeholder="Name of institution" aria-describedby="institute-err">
+              <p class="err" id="institute-err" role="alert"></p>
+            </div>
+            <div class="field" data-field="score">
+              <label for="score">Percentage obtained <span class="req">*</span></label>
+              <input type="number" id="score" name="score" inputmode="decimal" min="33" max="100" step="0.01" placeholder="e.g. 87.5" aria-describedby="score-err">
+              <p class="err" id="score-err" role="alert"></p>
+            </div>
+
+            <h2 class="group-title">Interests</h2>
+            <div class="field span2">
+              <span class="legend" id="int-l">Clubs you may want to join</span>
+              <div class="chips" role="group" aria-labelledby="int-l">
+                <label class="chip"><input type="checkbox" name="interests" value="Coding"><span>Coding</span></label>
+                <label class="chip"><input type="checkbox" name="interests" value="Robotics"><span>Robotics</span></label>
+                <label class="chip"><input type="checkbox" name="interests" value="Cricket"><span>Cricket</span></label>
+                <label class="chip"><input type="checkbox" name="interests" value="Music"><span>Music</span></label>
+                <label class="chip"><input type="checkbox" name="interests" value="Debate"><span>Debate</span></label>
+                <label class="chip"><input type="checkbox" name="interests" value="Photography"><span>Photography</span></label>
+                <label class="chip"><input type="checkbox" name="interests" value="Theatre"><span>Theatre</span></label>
+                <label class="chip"><input type="checkbox" name="interests" value="NSS volunteering"><span>NSS volunteering</span></label>
+              </div>
+              <p class="hint" id="int-hint">Pick up to 4.</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- STEP 3 -->
+        <section class="step" data-step="2" hidden>
+          <div class="review" id="review"></div>
+          <div class="field" data-field="consent" style="margin-top:22px;">
+            <label class="check">
+              <input type="checkbox" id="consent" name="consent" aria-describedby="consent-err">
+              <span class="box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span>
+              <span class="txt">I confirm that the details above are correct and I agree to follow the college rules. <span class="req">*</span></span>
+            </label>
+            <p class="err" id="consent-err" role="alert"></p>
+          </div>
+        </section>
+
+        <div class="actions">
+          <button type="button" class="btn btn-ghost" id="backBtn" hidden>Back</button>
+          <span class="spacer"></span>
+          <button type="submit" class="btn btn-primary" id="nextBtn">Continue</button>
+        </div>
+      </form>
+    </div>
+
+    <section class="success" id="success" hidden aria-live="polite">
+      <div class="tick" aria-hidden="true">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>
+      </div>
+      <div class="head" style="margin:0;">
+        <p class="eyebrow">Registration complete</p>
+        <h1 id="successTitle" tabindex="-1">Welcome to Lakeview, <span id="successName"></span></h1>
+        <p>Keep this registration number. You will need it at the admissions desk.</p>
+      </div>
+      <div class="regno">
+        <div><small>Registration number</small><code id="regNo">LVC-27-00000</code></div>
+        <button type="button" class="btn btn-ghost btn-small" id="copyBtn">Copy number</button>
+      </div>
+      <div class="rsec"><header><h2>Summary</h2></header><dl id="successDl"></dl></div>
+      <button type="button" class="btn btn-primary" id="againBtn">Register another student</button>
+    </section>
+  </main>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  var $ = function (s, r) { return (r || document).querySelector(s); };
+  var $$ = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
+
+  var form = $('#reg');
+  var stepEls = $$('.step');
+  var railItems = $$('#rail li');
+  var LAST = stepEls.length - 1;
+  var current = 0;
+  var touched = {};
+  var photoData = '';
+  var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  var heads = [
+    ['Tell us about yourself', 'Use your name exactly as it appears on your previous marksheet.'],
+    ['Your studies', 'Choose your programme and enter your last exam details.'],
+    ['Review and submit', 'Check everything once. Use Edit to fix anything that looks wrong.']
+  ];
+
+  var stepFields = [
+    ['firstName', 'lastName', 'dob', 'gender', 'email', 'phone', 'guardian', 'guardianPhone', 'address', 'city', 'state', 'pin'],
+    ['program', 'mode', 'qualification', 'passYear', 'institute', 'score'],
+    ['consent']
+  ];
+
+  /* ---------- Fill selects ---------- */
+  var states = ['Andaman and Nicobar Islands', 'Andhra Pradesh', 'Arunachal Pradesh', 'Assam', 'Bihar', 'Chandigarh', 'Chhattisgarh', 'Delhi', 'Goa', 'Gujarat', 'Haryana', 'Himachal Pradesh', 'Jammu and Kashmir', 'Jharkhand', 'Karnataka', 'Kerala', 'Ladakh', 'Madhya Pradesh', 'Maharashtra', 'Manipur', 'Meghalaya', 'Mizoram', 'Nagaland', 'Odisha', 'Puducherry', 'Punjab', 'Rajasthan', 'Sikkim', 'Tamil Nadu', 'Telangana', 'Tripura', 'Uttar Pradesh', 'Uttarakhand', 'West Bengal'];
+  var stateSel = $('#state');
+  states.forEach(function (s) { var o = document.createElement('option'); o.textContent = s; stateSel.appendChild(o); });
+
+  var yearSel = $('#passYear');
+  var thisYear = new Date().getFullYear();
+  for (var y = thisYear; y >= thisYear - 5; y--) { var oy = document.createElement('option'); oy.textContent = y; yearSel.appendChild(oy); }
+
+  var dobEl = $('#dob');
+  var today = new Date();
+  function iso(d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+  dobEl.max = iso(today);
+  dobEl.min = iso(new Date(today.getFullYear() - 70, 0, 1));
+
+  /* ---------- Validation ---------- */
+  var nameRe = /^[A-Za-z][A-Za-z .'\-]+$/;
+  var phoneRe = /^[6-9]\d{9}$/;
+
+  var rules = {
+    firstName: function (v) { return nameRe.test(v.trim()) ? '' : 'Enter your first name using letters only.'; },
+    lastName: function (v) { return nameRe.test(v.trim()) ? '' : 'Enter your last name using letters only.'; },
+    dob: function (v) {
+      if (!v) return 'Choose your date of birth.';
+      var d = new Date(v), n = new Date();
+      if (isNaN(d.getTime()) || d > n) return 'Date of birth cannot be in the future.';
+      var age = n.getFullYear() - d.getFullYear();
+      var m = n.getMonth() - d.getMonth();
+      if (m < 0 || (m === 0 && n.getDate() < d.getDate())) age--;
+      if (age < 16) return 'Applicants must be at least 16 years old.';
+      if (age > 60) return 'Check the year of birth.';
+      return '';
+    },
+    gender: function (v) { return v ? '' : 'Select one option.'; },
+    email: function (v) { return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v.trim()) ? '' : 'Enter a valid email, like name@example.com.'; },
+    phone: function (v) { return phoneRe.test(v) ? '' : 'Enter a 10-digit mobile number starting with 6, 7, 8 or 9.'; },
+    guardian: function (v) { return nameRe.test(v.trim()) ? '' : 'Enter your parent or guardian’s name.'; },
+    guardianPhone: function (v) { return phoneRe.test(v) ? '' : 'Enter a 10-digit mobile number starting with 6, 7, 8 or 9.'; },
+    address: function (v) { return v.trim().length >= 8 ? '' : 'Enter your full street address (at least 8 characters).'; },
+    city: function (v) { return v.trim().length >= 2 ? '' : 'Enter your city or town.'; },
+    state: function (v) { return v ? '' : 'Select your state.'; },
+    pin: function (v) { return /^[1-9]\d{5}$/.test(v) ? '' : 'Enter a valid 6-digit PIN code.'; },
+    program: function (v) { return v ? '' : 'Select the programme you are applying for.'; },
+    mode: function (v) { return v ? '' : 'Choose day scholar or hostel.'; },
+    qualification: function (v) { return v ? '' : 'Select your qualification.'; },
+    passYear: function (v) { return v ? '' : 'Select the year you passed.'; },
+    institute: function (v) { return v.trim().length >= 3 ? '' : 'Enter the name of your school or college.'; },
+    score: function (v) {
+      var n = parseFloat(v);
+      if (v === '' || isNaN(n)) return 'Enter your percentage.';
+      return (n >= 33 && n <= 100) ? '' : 'Enter a percentage between 33 and 100.';
+    },
+    consent: function (v) { return v ? '' : 'Tick the box to confirm before submitting.'; }
+  };
+
+  function getVal(name) {
+    var els = $$('[name="' + name + '"]', form);
+    if (!els.length) return '';
+    if (els[0].type === 'radio') { var r = els.filter(function (e) { return e.checked; })[0]; return r ? r.value : ''; }
+    if (els[0].type === 'checkbox') return els[0].checked ? 'yes' : '';
+    return els[0].value;
+  }
+
+  function paint(name, msg) {
+    var wrap = $('[data-field="' + name + '"]');
+    var err = $('#' + name + '-err');
+    if (!wrap || !err) return;
+    err.textContent = msg;
+    wrap.classList.toggle('invalid', !!msg);
+    $$('[name="' + name + '"]', form).forEach(function (el) {
+      if (msg) el.setAttribute('aria-invalid', 'true'); else el.removeAttribute('aria-invalid');
+    });
+  }
+
+  function check(name) {
+    var msg = rules[name](getVal(name));
+    paint(name, msg);
+    return msg === '';
+  }
+
+  function validateStep(i) {
+    var firstBad = null;
+    stepFields[i].forEach(function (n) {
+      touched[n] = true;
+      if (!check(n) && !firstBad) firstBad = n;
+    });
+    if (firstBad) {
+      var el = $('[name="' + firstBad + '"]', form);
+      if (el) el.focus();
+      return false;
+    }
+    return true;
+  }
+
+  /* ---------- Live ID card ---------- */
+  function initials(first, last) {
+    var a = (first || '').trim().charAt(0), b = (last || '').trim().charAt(0);
+    return (a + b).toUpperCase() || '?';
+  }
+
+  function updateCard() {
+    var first = getVal('firstName'), last = getVal('lastName');
+    var full = (first.trim() + ' ' + last.trim()).trim();
+    $('#cardName').textContent = full || 'Your name';
+    $('#cardInitials').textContent = initials(first, last);
+    $('#cardProgram').textContent = getVal('program') || 'Programme not chosen yet';
+    $('#cardMode').textContent = getVal('mode');
+    var img = $('#cardImg');
+    if (photoData) { img.src = photoData; img.hidden = false; $('#cardInitials').hidden = true; }
+    else { img.hidden = true; img.removeAttribute('src'); $('#cardInitials').hidden = false; }
+  }
+
+  /* ---------- Photo ---------- */
+  $('#photo').addEventListener('change', function (e) {
+    var f = e.target.files && e.target.files[0];
+    var err = $('#photo-err');
+    err.textContent = '';
+    if (!f) return;
+    if (!/^image\/(png|jpeg|webp)$/.test(f.type)) { err.textContent = 'Choose a JPG, PNG or WebP image.'; e.target.value = ''; return; }
+    if (f.size > 2 * 1024 * 1024) { err.textContent = 'That image is over 2 MB. Choose a smaller one.'; e.target.value = ''; return; }
+    var reader = new FileReader();
+    reader.onload = function () {
+      photoData = String(reader.result);
+      $('#avatarImg').src = photoData;
+      $('#avatarImg').hidden = false;
+      $('#avatarIcon').style.display = 'none';
+      $('#photoBtn').textContent = 'Change photo';
+      updateCard();
+    };
+    reader.onerror = function () { err.textContent = 'Could not read that file. Try another image.'; };
+    reader.readAsDataURL(f);
+  });
+  $('#photoBtn').addEventListener('keydown', function (e) {
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); $('#photo').click(); }
+  });
+
+  /* ---------- Input behaviour ---------- */
+  form.addEventListener('input', function (e) {
+    var t = e.target, name = t.name;
+    if (t.dataset && t.dataset.digits) {
+      t.value = t.value.replace(/\D/g, '').slice(0, parseInt(t.dataset.digits, 10));
+    }
+    if (rules[name] && touched[name]) check(name);
+    updateCard();
+  });
+
+  form.addEventListener('change', function (e) {
+    var t = e.target, name = t.name;
+    if (name === 'interests') {
+      var picked = $$('input[name="interests"]:checked', form);
+      var hint = $('#int-hint');
+      if (picked.length > 4) { t.checked = false; hint.textContent = 'You can pick up to 4. Untick one to choose another.'; }
+      else hint.textContent = 'Pick up to 4.';
+    }
+    if (rules[name]) { touched[name] = true; check(name); }
+    updateCard();
+  });
+
+  form.addEventListener('focusout', function (e) {
+    var name = e.target.name;
+    if (rules[name] && e.target.type !== 'radio' && e.target.type !== 'checkbox') { touched[name] = true; check(name); }
+  });
+
+  /* ---------- Steps ---------- */
+  function go(n, init) {
+    current = n;
+    stepEls.forEach(function (s, i) { s.hidden = i !== n; });
+    railItems.forEach(function (li, i) {
+      li.classList.toggle('current', i === n);
+      li.classList.toggle('done', i < n);
+      $('.dot', li).textContent = i < n ? '✓' : String(i + 1);
+      if (i === n) li.setAttribute('aria-current', 'step'); else li.removeAttribute('aria-current');
+    });
+    $('#eyebrow').textContent = 'Step ' + (n + 1) + ' of ' + (LAST + 1);
+    $('#title').textContent = heads[n][0];
+    $('#lead').textContent = heads[n][1];
+    $('#backBtn').hidden = n === 0;
+    $('#nextBtn').textContent = n === LAST ? 'Submit registration' : 'Continue';
+    if (n === LAST) buildReview();
+    if (init) return;
+    $('#title').scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' });
+    $('#title').focus({ preventScroll: true });
+  }
+
+  function row(dl, k, v) {
+    var dt = document.createElement('dt'); dt.textContent = k;
+    var dd = document.createElement('dd'); dd.textContent = v || '—';
+    dl.appendChild(dt); dl.appendChild(dd);
+  }
+
+  function section(title, stepIndex, rows) {
+    var sec = document.createElement('div'); sec.className = 'rsec';
+    var head = document.createElement('header');
+    var h = document.createElement('h2'); h.textContent = title;
+    head.appendChild(h);
+    if (stepIndex !== null) {
+      var b = document.createElement('button');
+      b.type = 'button'; b.className = 'link-btn'; b.textContent = 'Edit';
+      b.setAttribute('aria-label', 'Edit ' + title.toLowerCase());
+      b.addEventListener('click', function () { go(stepIndex); });
+      head.appendChild(b);
+    }
+    sec.appendChild(head);
+    var dl = document.createElement('dl');
+    rows.forEach(function (r) { row(dl, r[0], r[1]); });
+    sec.appendChild(dl);
+    return sec;
+  }
+
+  function fullName() { return (getVal('firstName').trim() + ' ' + getVal('lastName').trim()).trim(); }
+
+  function buildReview() {
+    var box = $('#review');
+    box.textContent = '';
+    var interests = $$('input[name="interests"]:checked', form).map(function (e) { return e.value; }).join(', ');
+    box.appendChild(section('Personal details', 0, [
+      ['Name', fullName()], ['Date of birth', getVal('dob')], ['Gender', getVal('gender')],
+      ['Email', getVal('email')], ['Mobile', getVal('phone')],
+      ['Guardian', getVal('guardian') + ' (' + getVal('guardianPhone') + ')'],
+      ['Address', getVal('address') + ', ' + getVal('city') + ', ' + getVal('state') + ' ' + getVal('pin')]
+    ]));
+    box.appendChild(section('Academics', 1, [
+      ['Programme', getVal('program')], ['Accommodation', getVal('mode')],
+      ['Qualification', getVal('qualification') + ', ' + getVal('passYear')],
+      ['Institution', getVal('institute')], ['Percentage', getVal('score') + '%'],
+      ['Clubs', interests]
+    ]));
+  }
+
+  function newRegNo() {
+    var n = 0;
+    try { var a = new Uint32Array(1); crypto.getRandomValues(a); n = a[0] % 90000; }
+    catch (err) { n = Math.floor(Math.random() * 90000); }
+    return 'LVC-27-' + String(10000 + n);
+  }
+
+  function finish() {
+    var no = newRegNo();
+    /* TODO: send the form data to your server here, for example with fetch('/api/register', { method: 'POST', body: JSON.stringify(data) }) */
+    $('#successName').textContent = getVal('firstName').trim();
+    $('#regNo').textContent = no;
+    $('#cardId').textContent = no;
+    var dl = $('#successDl'); dl.textContent = '';
+    row(dl, 'Name', fullName());
+    row(dl, 'Programme', getVal('program'));
+    row(dl, 'Email', getVal('email'));
+    row(dl, 'Mobile', getVal('phone'));
+    railItems.forEach(function (li) { li.classList.remove('current'); li.classList.add('done'); $('.dot', li).textContent = '✓'; });
+    $('#formWrap').hidden = true;
+    $('#success').hidden = false;
+    $('#shell').classList.add('done');
+    $('#successTitle').scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' });
+    $('#successTitle').focus({ preventScroll: true });
+  }
+
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+    if (current < LAST) {
+      if (validateStep(current)) go(current + 1);
+      return;
+    }
+    for (var i = 0; i < LAST; i++) {
+      if (!validateStep(i)) { go(i); validateStep(i); return; }
+    }
+    if (validateStep(LAST)) finish();
+  });
+
+  $('#backBtn').addEventListener('click', function () { if (current > 0) go(current - 1); });
+
+  $('#copyBtn').addEventListener('click', function () {
+    var btn = this, no = $('#regNo').textContent;
+    function done(msg) { btn.textContent = msg; setTimeout(function () { btn.textContent = 'Copy number'; }, 1800); }
+    try {
+      navigator.clipboard.writeText(no).then(function () { done('Copied'); }, function () { select(); });
+    } catch (err) { select(); }
+    function select() {
+      var r = document.createRange(); r.selectNodeContents($('#regNo'));
+      var s = window.getSelection(); s.removeAllRanges(); s.addRange(r);
+      done('Press Ctrl+C');
+    }
+  });
+
+  $('#againBtn').addEventListener('click', function () {
+    form.reset();
+    touched = {}; photoData = '';
+    $$('.field.invalid').forEach(function (f) { f.classList.remove('invalid'); });
+    $$('.err').forEach(function (p) { p.textContent = ''; });
+    $$('[aria-invalid]').forEach(function (el) { el.removeAttribute('aria-invalid'); });
+    $('#avatarImg').hidden = true; $('#avatarImg').removeAttribute('src');
+    $('#avatarIcon').style.display = '';
+    $('#photoBtn').textContent = 'Choose photo';
+    $('#cardId').textContent = 'LVC-27-•••••';
+    $('#shell').classList.remove('done');
+    $('#success').hidden = true;
+    $('#formWrap').hidden = false;
+    updateCard();
+    go(0);
+  });
+
+  go(0, true);
+  updateCard();
+})();
+</script>
+</body>
+</html>
