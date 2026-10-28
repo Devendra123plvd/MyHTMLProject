@@ -1,908 +1,562 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Lakeview Student Registration</title>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Pulivendula Bus Depot</title>
+<meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..800&family=Instrument+Sans:wght@400..700&family=JetBrains+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Public+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
-/* Basic reset (needed when the page is opened on its own) */
-:root { color-scheme: light; }
-body { margin: 0; }
-img { max-width: 100%; }
-[hidden] { display: none !important; }
+/* Layout: sticky top bar + one-page router (hash views). Home opens on an LED destination board; every other view is a calm utilitarian page. */
+:root{
+  --bg:#f2f5f3; --surface:#ffffff; --fg:#14211f; --muted:#51615e; --line:#d5dedb;
+  --accent:#0a6a64; --accent-fg:#ffffff; --accent-soft:#dcefec;
+  --board:#0d1514; --board-line:#233431; --led:#ffb400; --led-dim:#8a6a1c;
+  --good:#1c7a3d; --warn:#9a5b00;
+  --font-display:'Barlow Condensed','Arial Narrow',sans-serif;
+  --font-body:'Public Sans',system-ui,sans-serif;
+  --font-mono:'IBM Plex Mono',ui-monospace,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0b1211; --surface:#121c1a; --fg:#e6efed; --muted:#98aca8; --line:#243532;
+  --accent:#4fc7bd; --accent-fg:#06201d; --accent-soft:#16312e;
+  --board:#070c0c; --board-line:#1d2c2a; --good:#5fd08a; --warn:#f0b050; color-scheme:dark;}}
+:root[data-theme="dark"]{
+  --bg:#0b1211; --surface:#121c1a; --fg:#e6efed; --muted:#98aca8; --line:#243532;
+  --accent:#4fc7bd; --accent-fg:#06201d; --accent-soft:#16312e;
+  --board:#070c0c; --board-line:#1d2c2a; --good:#5fd08a; --warn:#f0b050; color-scheme:dark;}
 
-/* Layout: a dark side panel with a live student ID card and step rail, beside a stepped form that fills the card as you type. */
-:root {
-  --bg: #EAF1F3;
-  --surface: #FFFFFF;
-  --field: #F5F9FA;
-  --ink: #10222B;
-  --muted: #566B75;
-  --line: #D3DFE4;
-  --accent: #0B7A75;
-  --accent-ink: #FFFFFF;
-  --accent-soft: #DCF1EE;
-  --panel: #0C2E33;
-  --panel-ink: #E6F4F2;
-  --panel-muted: #8FB3B2;
-  --panel-line: #1F4A4E;
-  --highlight: #F2B632;
-  --bad: #B3261E;
-  --bad-soft: #FCE9E7;
-  --good: #1B7A43;
-  --shadow: rgba(16, 34, 43, 0.28);
-  --card-bg: #F7FBFA;
-  --card-ink: #10222B;
-  --display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
-  --body: "Instrument Sans", "Segoe UI", system-ui, sans-serif;
-  --mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
-}
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --bg: #081418;
-    --surface: #0F2227;
-    --field: #142C32;
-    --ink: #E5F0F2;
-    --muted: #92AAB3;
-    --line: #25434B;
-    --accent: #3CC4BB;
-    --accent-ink: #052120;
-    --accent-soft: #12393B;
-    --panel: #06191D;
-    --panel-ink: #E6F4F2;
-    --panel-muted: #7FA5A4;
-    --panel-line: #1A4247;
-    --highlight: #F2B632;
-    --bad: #FF8E86;
-    --bad-soft: #3A1B1A;
-    --good: #5FD395;
-    --shadow: rgba(0, 0, 0, 0.6);
-    color-scheme: dark;
-  }
-}
-:root[data-theme="dark"] {
-  --bg: #081418;
-  --surface: #0F2227;
-  --field: #142C32;
-  --ink: #E5F0F2;
-  --muted: #92AAB3;
-  --line: #25434B;
-  --accent: #3CC4BB;
-  --accent-ink: #052120;
-  --accent-soft: #12393B;
-  --panel: #06191D;
-  --panel-ink: #E6F4F2;
-  --panel-muted: #7FA5A4;
-  --panel-line: #1A4247;
-  --highlight: #F2B632;
-  --bad: #FF8E86;
-  --bad-soft: #3A1B1A;
-  --good: #5FD395;
-  --shadow: rgba(0, 0, 0, 0.6);
-  color-scheme: dark;
-}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--font-body);font-size:16px;line-height:1.6;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:30;background:var(--surface)}
+h1,h2,h3{font-family:var(--font-display);font-weight:600;line-height:1.1;margin:0;text-wrap:balance;letter-spacing:.01em}
+h1{font-size:clamp(2.4rem,7vw,4rem)} h2{font-size:clamp(1.8rem,4.5vw,2.5rem)} h3{font-size:1.35rem}
+p{margin:0;max-width:65ch}
+a{color:var(--accent)}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px;border-radius:3px}
+.wrap{max-width:1080px;margin-inline:auto}
+.mono{font-family:var(--font-mono);font-variant-numeric:tabular-nums}
+.eyebrow{font-size:.78rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:600}
 
-* { box-sizing: border-box; }
-body {
-  background: var(--bg);
-  color: var(--ink);
-  font: 15px/1.5 var(--body);
-  padding-block: clamp(12px, 3vw, 36px);
-  padding-left: max(16px, env(safe-area-inset-left, 0px));
-  padding-right: max(16px, env(safe-area-inset-right, 0px));
-}
-h1, h2, h3, p { margin: 0; }
-button, input, select { font: inherit; color: inherit; }
+/* top bar */
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--surface);border-bottom:1px solid var(--line);
+  margin-inline:calc(-1*max(16px,env(safe-area-inset-left,0px)));padding-inline:max(16px,env(safe-area-inset-left,0px))}
+.top .wrap{display:flex;align-items:center;gap:20px;min-height:60px}
+.brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--fg);flex:none}
+.brand-mark{width:34px;height:34px;border-radius:8px;background:var(--accent);display:grid;place-items:center}
+.brand-name{font-family:var(--font-display);font-weight:700;font-size:1.25rem;line-height:1}
+.brand-name small{display:block;font-family:var(--font-body);font-weight:500;font-size:.66rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-top:3px}
+nav{display:flex;gap:2px;overflow-x:auto;min-width:0;flex:1;scrollbar-width:thin}
+nav a{white-space:nowrap;text-decoration:none;color:var(--muted);font-weight:500;font-size:.92rem;padding:8px 11px;border-radius:6px}
+nav a:hover{color:var(--fg);background:var(--accent-soft)}
+nav a[aria-current="page"]{color:var(--fg);background:var(--accent-soft);box-shadow:inset 0 -2px 0 var(--accent)}
+.login-link{flex:none;background:var(--accent);color:var(--accent-fg);text-decoration:none;font-weight:600;font-size:.9rem;padding:8px 16px;border-radius:6px}
+.login-link:hover{filter:brightness(1.08)}
 
-.shell {
-  max-width: 1120px;
-  margin: 0 auto;
-  display: grid;
-  grid-template-columns: minmax(0, 360px) minmax(0, 1fr);
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: 18px;
-  overflow: hidden;
-  box-shadow: 0 30px 60px -40px var(--shadow);
-}
+main{padding-block:36px 56px}
+.view{display:grid;gap:28px}
+.lede{color:var(--muted);font-size:1.08rem}
+.head{display:grid;gap:10px}
 
-/* ---------- Side panel ---------- */
-.side {
-  background: var(--panel);
-  color: var(--panel-ink);
-  padding: 28px;
-  display: flex;
-  flex-direction: column;
-  gap: 30px;
-  min-width: 0;
-}
-.brand { display: flex; align-items: center; gap: 12px; }
-.brand svg { flex: none; }
-.brand b { display: block; font: 700 17px/1.15 var(--display); letter-spacing: 0.01em; }
-.brand small { display: block; font: 500 11px/1.4 var(--mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--panel-muted); }
+/* LED board */
+.hero{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);gap:32px;align-items:center}
+.hero-copy{display:grid;gap:18px}
+.btns{display:flex;flex-wrap:wrap;gap:10px}
+.btn{display:inline-block;font:inherit;font-weight:600;font-size:.95rem;padding:11px 20px;border-radius:6px;border:1px solid var(--accent);background:var(--accent);color:var(--accent-fg);text-decoration:none;cursor:pointer}
+.btn.ghost{background:transparent;color:var(--accent)}
+.btn:hover{filter:brightness(1.08)}
+.board{background:var(--board);border-radius:10px;padding:16px 18px 10px;border:1px solid var(--board-line);min-width:0}
+.board-head{display:flex;justify-content:space-between;gap:12px;color:var(--led-dim);font-family:var(--font-mono);font-size:.78rem;letter-spacing:.08em;text-transform:uppercase;padding-bottom:10px;border-bottom:1px solid var(--board-line)}
+.board-head b{color:var(--led);font-weight:500}
+.board-row{display:grid;grid-template-columns:4.2ch minmax(0,1fr) auto;gap:14px;align-items:baseline;padding:11px 0;border-bottom:1px dashed var(--board-line);font-family:var(--font-mono);color:var(--led)}
+.board-row:last-child{border-bottom:0}
+.board-row .t{font-size:1.15rem;width:5ch}
+.board-row .d{font-family:var(--font-display);font-size:1.5rem;letter-spacing:.06em;text-transform:uppercase;overflow-wrap:anywhere;font-weight:600}
+.board-row .p{font-size:.78rem;color:var(--led-dim);white-space:nowrap}
+.board-row .t{grid-column:1}
 
-.idcard {
-  background: var(--card-bg);
-  color: var(--card-ink);
-  border-radius: 14px;
-  overflow: hidden;
-  transform: rotate(-1.6deg);
-  box-shadow: 0 18px 30px -18px rgba(0, 0, 0, 0.7);
-  transition: transform 0.3s ease;
-}
-.idcard:hover { transform: rotate(0deg); }
-.idtop {
-  display: flex; justify-content: space-between; gap: 8px;
-  padding: 9px 14px;
-  background: var(--highlight);
-  color: #10222B;
-  font: 600 10.5px/1.2 var(--mono);
-  letter-spacing: 0.1em;
-}
-.idbody { display: flex; gap: 14px; padding: 16px 14px 12px; align-items: center; }
-.idphoto {
-  flex: none; width: 82px; height: 102px; border-radius: 8px;
-  background: #D9E9E7; display: grid; place-items: center; overflow: hidden; position: relative;
-}
-.idphoto span { font: 700 30px/1 var(--display); color: #0B7A75; }
-.idphoto img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
-.idinfo { min-width: 0; display: grid; gap: 4px; }
-.idname { font: 700 19px/1.15 var(--display); overflow-wrap: anywhere; }
-.idprog { font-size: 12.5px; line-height: 1.35; color: #3E545E; }
-.idmode { font: 500 10.5px/1.3 var(--mono); letter-spacing: 0.06em; text-transform: uppercase; color: #0B7A75; min-height: 1.3em; }
-.idfoot { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 14px 14px; border-top: 1px dashed #B9CCD1; }
-.idno { font: 500 13px/1 var(--mono); letter-spacing: 0.05em; }
-.bars {
-  flex: none; width: 74px; height: 22px;
-  background: repeating-linear-gradient(90deg, #10222B 0 2px, transparent 2px 4px, #10222B 4px 5px, transparent 5px 8px);
-}
+/* facts strip */
+.facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:0;border:1px solid var(--line);border-radius:10px;background:var(--surface);overflow:hidden}
+.fact{padding:18px 20px;border-left:1px solid var(--line);display:grid;gap:2px}
+.fact:first-child{border-left:0}
+.fact b{font-family:var(--font-display);font-size:2rem;font-weight:600;line-height:1}
+.fact span{color:var(--muted);font-size:.9rem}
 
-.rail { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
-.rail li { display: flex; gap: 14px; align-items: center; padding: 10px 0; position: relative; color: var(--panel-muted); }
-.rail li + li::before {
-  content: ""; position: absolute; left: 15px; top: -14px; height: 18px; width: 2px; background: var(--panel-line);
-}
-.dot {
-  flex: none; width: 32px; height: 32px; border-radius: 50%;
-  display: grid; place-items: center;
-  border: 2px solid var(--panel-line);
-  font: 600 13px/1 var(--mono);
-  background: var(--panel);
-}
-.lbl b { display: block; font: 600 15px/1.2 var(--display); color: inherit; }
-.lbl small { font-size: 12.5px; }
-.rail li.current { color: var(--panel-ink); }
-.rail li.current .dot { border-color: var(--highlight); color: var(--highlight); }
-.rail li.done { color: var(--panel-ink); }
-.rail li.done .dot { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
-.rail li.done + li::before, .rail li.current::before { background: var(--accent); }
-.sidenote { margin-top: auto; font-size: 12.5px; line-height: 1.5; color: var(--panel-muted); }
+/* cards & grids */
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:16px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:20px;display:grid;gap:8px;align-content:start;min-width:0}
+.card p{color:var(--muted);font-size:.95rem}
+.tag{display:inline-block;font-size:.72rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;padding:2px 8px;border-radius:4px;background:var(--accent-soft);color:var(--accent);justify-self:start}
+.tag.sample{background:transparent;border:1px dashed var(--line);color:var(--muted)}
+.rate{font-family:var(--font-mono);font-size:.85rem;color:var(--fg)}
 
-/* ---------- Main ---------- */
-.main { padding: clamp(22px, 4vw, 40px); min-width: 0; }
-.head { display: grid; gap: 6px; margin-bottom: 26px; }
-.eyebrow { font: 500 12px/1.2 var(--mono); letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent); }
-.head h1 { font: 700 clamp(26px, 4vw, 34px)/1.1 var(--display); letter-spacing: -0.01em; text-wrap: balance; outline: none; }
-.head p { color: var(--muted); max-width: 56ch; }
+/* tools */
+.tool{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:20px;display:grid;gap:16px;min-width:0}
+.row{display:flex;flex-wrap:wrap;gap:14px;align-items:end}
+.field{display:grid;gap:5px;min-width:0;flex:1 1 180px}
+label{font-size:.82rem;font-weight:600;color:var(--muted);letter-spacing:.02em}
+input,select,textarea{font:inherit;color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:10px 12px;width:100%;min-width:0}
+textarea{min-height:110px;resize:vertical}
+.scroll{overflow-x:auto;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;min-width:560px;font-size:.95rem}
+th,td{text-align:left;padding:12px 14px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:.76rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:600;background:var(--bg)}
+tr:last-child td{border-bottom:0}
+.times{display:flex;flex-wrap:wrap;gap:6px}
+.times span{font-family:var(--font-mono);font-size:.82rem;background:var(--accent-soft);padding:2px 7px;border-radius:4px}
+.times span.next{background:var(--led);color:#241a00;font-weight:500}
+.result{font-family:var(--font-display);font-size:2.6rem;font-weight:600;line-height:1}
+.note{font-size:.88rem;color:var(--muted)}
+.msg{padding:12px 14px;border-radius:6px;font-size:.92rem;background:var(--accent-soft)}
+.msg.err{background:transparent;border:1px solid var(--warn);color:var(--warn)}
 
-.step { animation: rise 0.28s ease both; }
-@keyframes rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
-@media (prefers-reduced-motion: reduce) {
-  .step { animation: none; }
-  .idcard { transition: none; }
-}
+/* two col */
+.split{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:24px;align-items:start}
+.list{display:grid;gap:0;margin:0;padding:0;list-style:none}
+.list li{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;padding:12px 0;border-bottom:1px solid var(--line)}
+.list li:last-child{border-bottom:0}
+.list small{color:var(--muted);display:block}
+.plan{width:100%;height:auto;display:block}
+.plan text{font-family:var(--font-body);font-size:11px;fill:var(--muted)}
+.plan .lbl{fill:var(--fg);font-weight:600}
+.notice{display:grid;grid-template-columns:auto minmax(0,1fr);gap:16px;padding:16px 0;border-bottom:1px solid var(--line)}
+.notice:last-child{border-bottom:0}
+.notice .date{font-family:var(--font-display);text-align:center;line-height:1;min-width:56px}
+.notice .date b{display:block;font-size:2rem;font-weight:600}
+.notice .date span{font-size:.8rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.notice h3{font-size:1.15rem;margin-bottom:4px}
+.notice p{color:var(--muted);font-size:.95rem}
+.login-box{max-width:420px;margin-inline:auto;width:100%}
+.demo-cred{font-family:var(--font-mono);font-size:.85rem;background:var(--bg);border:1px dashed var(--line);border-radius:6px;padding:10px 12px}
 
-.grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px 16px; }
-.span2 { grid-column: 1 / -1; }
-.group-title {
-  grid-column: 1 / -1; margin-top: 8px; padding-top: 18px; border-top: 1px solid var(--line);
-  font: 600 13px/1.2 var(--mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted);
-}
-.group-title:first-child { margin-top: 0; padding-top: 0; border-top: 0; }
+footer{border-top:1px solid var(--line);padding-block:26px;color:var(--muted);font-size:.86rem;display:grid;gap:6px;margin-inline:calc(-1*max(16px,env(safe-area-inset-left,0px)));padding-inline:max(16px,env(safe-area-inset-left,0px))}
 
-.field { display: grid; gap: 6px; align-content: start; min-width: 0; }
-.field > label, .field > .legend { font-weight: 600; font-size: 13.5px; }
-.field .req { color: var(--bad); }
-.hint { font-size: 12.5px; color: var(--muted); }
-.err { font-size: 12.5px; color: var(--bad); min-height: 0; }
-.err:empty { display: none; }
-
-input[type="text"], input[type="email"], input[type="tel"], input[type="date"], input[type="number"], select {
-  width: 100%; min-height: 46px; padding: 10px 13px;
-  background: var(--field); border: 1.5px solid var(--line); border-radius: 10px;
-  transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
+@media (max-width:820px){
+  .hero,.split{grid-template-columns:minmax(0,1fr)}
+  .top .wrap{gap:10px}
+  .brand-name small{display:none}
+  .fact{border-left:0;border-top:1px solid var(--line)}
+  .fact:first-child{border-top:0}
 }
-input::placeholder { color: color-mix(in srgb, var(--muted) 70%, transparent); }
-input:hover, select:hover { border-color: color-mix(in srgb, var(--accent) 45%, var(--line)); }
-input:focus-visible, select:focus-visible {
-  outline: none; border-color: var(--accent); background: var(--surface);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 28%, transparent);
+@media (max-width:520px){
+  .board-row{grid-template-columns:4.6ch minmax(0,1fr)}
+  .board-row .p{grid-column:2}
+  .board-row .d{font-size:1.25rem}
+  .login-link{padding:8px 12px}
 }
-.invalid input, .invalid select { border-color: var(--bad); background: var(--bad-soft); }
-.invalid .pill span { border-color: var(--bad); }
-
-.pills { display: flex; flex-wrap: wrap; gap: 10px; }
-.pill, .chip { position: relative; display: inline-flex; }
-.pill input, .chip input { position: absolute; inset: 0; opacity: 0; margin: 0; cursor: pointer; width: 100%; height: 100%; }
-.pill span, .chip span {
-  display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 8px 16px;
-  border: 1.5px solid var(--line); border-radius: 10px; background: var(--field);
-  font-weight: 500; transition: all 0.15s; user-select: none;
-}
-.chip span { min-height: 38px; padding: 6px 14px; border-radius: 999px; font-size: 14px; }
-.pill input:hover + span, .chip input:hover + span { border-color: var(--accent); }
-.pill input:checked + span, .chip input:checked + span {
-  background: var(--accent); border-color: var(--accent); color: var(--accent-ink); font-weight: 600;
-}
-.pill input:focus-visible + span, .chip input:focus-visible + span, .check input:focus-visible + .box {
-  outline: 3px solid color-mix(in srgb, var(--accent) 45%, transparent); outline-offset: 2px;
-}
-.chips { display: flex; flex-wrap: wrap; gap: 8px; }
-
-.photo { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
-.avatar {
-  width: 72px; height: 72px; border-radius: 50%; flex: none; overflow: hidden;
-  background: var(--accent-soft); display: grid; place-items: center; color: var(--accent);
-  border: 1.5px dashed var(--accent);
-}
-.avatar img { width: 100%; height: 100%; object-fit: cover; }
-
-.btn {
-  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
-  min-height: 46px; padding: 10px 22px; border-radius: 10px; border: 1.5px solid transparent;
-  font-weight: 600; cursor: pointer; transition: transform 0.1s, background 0.15s, border-color 0.15s;
-}
-.btn:active { transform: translateY(1px); }
-.btn:focus-visible { outline: 3px solid color-mix(in srgb, var(--accent) 45%, transparent); outline-offset: 2px; }
-.btn-primary { background: var(--accent); color: var(--accent-ink); }
-.btn-primary:hover { background: color-mix(in srgb, var(--accent) 88%, var(--ink)); }
-.btn-ghost { background: transparent; border-color: var(--line); color: var(--ink); }
-.btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
-.btn-small { min-height: 38px; padding: 6px 16px; font-size: 14px; }
-.actions { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 30px; padding-top: 22px; border-top: 1px solid var(--line); }
-.actions .spacer { flex: 1; }
-
-/* Review */
-.review { display: grid; gap: 18px; }
-.rsec { border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
-.rsec header { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 12px 16px; background: var(--field); border-bottom: 1px solid var(--line); }
-.rsec h2 { font: 700 16px/1.2 var(--display); }
-.link-btn { background: none; border: 0; padding: 6px 4px; color: var(--accent); font-weight: 600; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
-.link-btn:focus-visible { outline: 3px solid color-mix(in srgb, var(--accent) 45%, transparent); border-radius: 4px; }
-.rsec dl { margin: 0; display: grid; grid-template-columns: minmax(110px, 170px) minmax(0, 1fr); }
-.rsec dt, .rsec dd { margin: 0; padding: 10px 16px; border-bottom: 1px solid var(--line); }
-.rsec dt { color: var(--muted); font-size: 13.5px; }
-.rsec dd { font-weight: 500; overflow-wrap: anywhere; }
-.rsec dt:nth-last-of-type(1), .rsec dd:last-of-type { border-bottom: 0; }
-
-.check { display: flex; gap: 12px; align-items: flex-start; cursor: pointer; position: relative; }
-.check input { position: absolute; opacity: 0; width: 22px; height: 22px; margin: 0; cursor: pointer; }
-.check .box {
-  flex: none; width: 22px; height: 22px; border-radius: 6px; margin-top: 1px;
-  border: 1.5px solid var(--line); background: var(--field); display: grid; place-items: center; transition: all 0.15s;
-}
-.check .box svg { opacity: 0; width: 14px; height: 14px; }
-.check input:checked + .box { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
-.check input:checked + .box svg { opacity: 1; }
-.invalid .check .box { border-color: var(--bad); }
-.check .txt { font-size: 14px; color: var(--muted); }
-
-/* Success */
-.success { display: grid; gap: 22px; justify-items: start; animation: rise 0.35s ease both; }
-.tick { width: 58px; height: 58px; border-radius: 50%; display: grid; place-items: center; background: var(--accent); color: var(--accent-ink); }
-.regno {
-  display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
-  padding: 14px 18px; border: 1.5px dashed var(--accent); border-radius: 12px; background: var(--accent-soft);
-}
-.regno code { font: 500 22px/1 var(--mono); letter-spacing: 0.06em; }
-.regno small { display: block; font: 500 11px/1.2 var(--mono); letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
-.success .rsec { width: 100%; }
-
-.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
-
-/* ---------- Responsive ---------- */
-@media (max-width: 900px) {
-  .shell { grid-template-columns: minmax(0, 1fr); }
-  .side { padding: 20px; gap: 18px; }
-  .idcard { display: none; }
-  .shell.done .idcard { display: block; max-width: 360px; transform: none; }
-  .rail { grid-auto-flow: column; grid-auto-columns: 1fr; gap: 8px; }
-  .rail li { flex-direction: column; text-align: center; gap: 6px; padding: 0; align-items: center; }
-  .rail li + li::before { display: none; }
-  .lbl small { display: none; }
-  .lbl b { font-size: 13px; }
-  .sidenote { display: none; }
-}
-@media (max-width: 620px) {
-  .grid { grid-template-columns: minmax(0, 1fr); }
-  .rsec dl { grid-template-columns: minmax(0, 1fr); }
-  .rsec dt { border-bottom: 0; padding-bottom: 0; }
-  .actions .btn { flex: 1; }
-}
+@media (prefers-reduced-motion:no-preference){.view{animation:in .25s ease-out}}
+@keyframes in{from{opacity:.4;transform:translateY(4px)}to{opacity:1;transform:none}}
+.theme-toggle{padding:8px 12px;font-size:.85rem;white-space:nowrap}
+.action-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.small-btn{border:1px solid var(--line);background:var(--surface);color:var(--fg);border-radius:6px;padding:6px 10px;cursor:pointer;font:inherit;font-size:.85rem}
+.small-btn:hover,.small-btn[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--accent)}
+.favorite-star{font-size:1rem;line-height:1}
+.helper{border:1px solid var(--line);border-radius:8px;padding:14px;background:var(--surface);color:var(--muted);font-size:.9rem}
+#backTop{position:fixed;right:18px;bottom:18px;z-index:25;border:0;border-radius:999px;background:var(--accent);color:var(--accent-fg);padding:12px 15px;box-shadow:0 4px 16px #0002;cursor:pointer}
+@media print{.top,footer,.btn,.theme-toggle,.action-row,.login-link,#backTop{display:none!important}body{background:#fff;color:#000}.view[hidden]{display:none!important}main{padding:0}.tool,.card{break-inside:avoid}}
+[hidden]{display:none!important}
 </style>
 </head>
 <body>
-<div class="shell" id="shell">
-  <aside class="side">
-    <div class="brand">
-      <svg width="38" height="38" viewBox="0 0 38 38" aria-hidden="true">
-        <rect width="38" height="38" rx="9" fill="#F2B632"/>
-        <path d="M6 22c4-5 7-5 11 0s7 5 11 0 4-3 4-3" fill="none" stroke="#0C2E33" stroke-width="3" stroke-linecap="round"/>
-        <path d="M6 29c4-5 7-5 11 0s7 5 11 0 4-3 4-3" fill="none" stroke="#0C2E33" stroke-width="3" stroke-linecap="round" opacity=".45"/>
-        <circle cx="26" cy="11" r="3.5" fill="#0C2E33"/>
+
+
+<header class="top">
+  <div class="wrap">
+    <a class="brand" href="#home" aria-label="Pulivendula Bus Depot home">
+      <span class="brand-mark" aria-hidden="true">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="15" rx="3"/><path d="M4 11h16"/><circle cx="8.5" cy="15" r=".6"/><circle cx="15.5" cy="15" r=".6"/><path d="M6 18v2M18 18v2"/></svg>
+      </span>
+      <span class="brand-name">Pulivendula Depot<small>Demo portal</small></span>
+    </a>
+    <nav aria-label="Main">
+      <a href="#home">Home</a>
+      <a href="#services">Bus services</a>
+      <a href="#timetable">Timetable</a>
+      <a href="#fares">Fares</a>
+      <a href="#location">Location</a>
+      <a href="#notices">Notices</a>
+      <a href="#about">About</a>
+      <a href="#contact">Contact</a>
+    </nav>
+    <button class="btn ghost theme-toggle" id="themeToggle" type="button" aria-label="Switch color theme">🌙 Theme</button>
+    <a class="login-link" id="authLink" href="#login">Login</a>
+  </div>
+</header>
+
+<main class="wrap">
+
+<!-- HOME -->
+<section class="view" data-view="home">
+  <div class="hero">
+    <div class="hero-copy">
+      <span class="eyebrow">Pulivendula, Kadapa district</span>
+      <h1>Departures from Pulivendula, at a glance.</h1>
+      <p class="lede">Check the next buses, plan a fare, find the depot and sign in to your demo account. Everything on this site is sample content for a design preview.</p>
+      <div class="btns">
+        <a class="btn" href="#timetable">View timetable</a>
+        <a class="btn ghost" href="#location">Find the depot</a>
+      </div>
+    </div>
+    <div class="board" aria-label="Next departures board">
+      <div class="board-head"><span>Next departures</span><b class="mono" id="clock">--:--</b></div>
+      <div id="boardRows"></div>
+    </div>
+  </div>
+
+  <div class="facts">
+    <div class="fact"><b>9</b><span>Destinations in the sample timetable</span></div>
+    <div class="fact"><b>4</b><span>Service classes, ordinary to AC sleeper</span></div>
+    <div class="fact"><b>5:30 – 22:30</b><span>Sample first and last departures</span></div>
+    <div class="fact"><b>6</b><span>Boarding platforms in the layout</span></div>
+  </div>
+
+  <div class="head"><h2>Plan your trip</h2></div>
+  <div class="grid">
+    <a class="card" href="#services" style="text-decoration:none;color:inherit"><h3>Bus services</h3><p>Compare ordinary, express, deluxe and AC sleeper classes.</p></a>
+    <a class="card" href="#fares" style="text-decoration:none;color:inherit"><h3>Fare calculator</h3><p>Pick a destination and class to see an estimated fare.</p></a>
+    <a class="card" href="#notices" style="text-decoration:none;color:inherit"><h3>Notices</h3><p>Schedule changes, festival specials and depot announcements.</p></a>
+  </div>
+  <div class="helper"><strong>New features:</strong> switch between light and dark themes, save favourite routes, filter saved routes, print the timetable, and quickly clear search filters. Saved theme and routes stay in this browser only.</div>
+</section>
+
+<!-- SERVICES -->
+<section class="view" data-view="services" hidden>
+  <div class="head"><span class="eyebrow">Bus services</span><h2>Four ways to travel</h2><p class="lede">Choose the class that fits your distance and budget. Rates are sample values.</p></div>
+  <div class="grid">
+    <div class="card"><span class="tag">Ordinary</span><h3>Local and district</h3><p>Frequent stops, ideal for nearby towns and villages. Seats and standing room.</p><span class="rate">₹1.40 per km</span></div>
+    <div class="card"><span class="tag">Express</span><h3>Fewer stops</h3><p>Faster point-to-point service to district headquarters and major towns.</p><span class="rate">₹1.60 per km</span></div>
+    <div class="card"><span class="tag">Deluxe</span><h3>Pushback seats</h3><p>Reclining seats and luggage racks for longer inter-city runs.</p><span class="rate">₹1.90 per km</span></div>
+    <div class="card"><span class="tag">AC Sleeper</span><h3>Overnight routes</h3><p>Air-conditioned berths for night departures to metro cities.</p><span class="rate">₹2.60 per km</span></div>
+  </div>
+  <div class="head"><h2>Passenger amenities</h2></div>
+  <div class="grid">
+    <div class="card"><h3>Waiting hall</h3><p>Seating, fans and a charging corner near platforms 1 and 2.</p></div>
+    <div class="card"><h3>Enquiry counter</h3><p>Ask about routes, delays and lost property during depot hours.</p></div>
+    <div class="card"><h3>Advance booking</h3><p>Reserve seats on long routes at the counter or through this portal.</p></div>
+  </div>
+</section>
+
+<!-- TIMETABLE -->
+<section class="view" data-view="timetable" hidden>
+  <div class="head"><span class="eyebrow">Timetable</span><h2>Departures from Pulivendula</h2><p class="lede">Search by destination or filter by class. The next departure on each route is highlighted. Sample schedule only.</p></div>
+  <div class="tool">
+    <div class="row">
+      <div class="field"><label for="ttSearch">Destination</label><input id="ttSearch" type="search" placeholder="e.g. Kadapa"></div>
+      <div class="field"><label for="ttType">Service class</label>
+        <select id="ttType"><option value="">All classes</option><option>Ordinary</option><option>Express</option><option>Deluxe</option><option>AC Sleeper</option></select></div>
+    </div>
+    <div class="action-row">
+      <button class="small-btn" id="favoritesOnly" type="button" aria-pressed="false">☆ Saved routes only</button>
+      <button class="small-btn" id="printTimetable" type="button">Print timetable</button>
+      <button class="small-btn" id="clearFilters" type="button">Clear filters</button>
+    </div>
+    <p class="note">Tip: press the star beside a destination to save it on this device.</p>
+  </div>
+  <div class="scroll"><table>
+    <thead><tr><th>Destination</th><th>Class</th><th>Distance</th><th>Platform</th><th>Departures</th><th>Save</th></tr></thead>
+    <tbody id="ttBody"></tbody>
+  </table></div>
+  <p class="note" id="ttCount"></p>
+</section>
+
+<!-- FARES -->
+<section class="view" data-view="fares" hidden>
+  <div class="head"><span class="eyebrow">Fares</span><h2>Estimate your fare</h2><p class="lede">Fare is distance multiplied by the class rate, per passenger. Sample rates, not official fares.</p></div>
+  <div class="split">
+    <div class="tool">
+      <div class="field"><label for="fDest">Destination</label><select id="fDest"></select></div>
+      <div class="row">
+        <div class="field"><label for="fType">Service class</label>
+          <select id="fType"><option value="1.4">Ordinary</option><option value="1.6" selected>Express</option><option value="1.9">Deluxe</option><option value="2.6">AC Sleeper</option></select></div>
+        <div class="field"><label for="fPax">Passengers</label><input id="fPax" type="number" min="1" max="10" value="1"></div>
+      </div>
+    </div>
+    <div class="tool">
+      <span class="eyebrow">Estimated total</span>
+      <div class="result mono" id="fResult">₹0</div>
+      <p class="note" id="fDetail"></p>
+    </div>
+  </div>
+</section>
+
+<!-- LOCATION -->
+<section class="view" data-view="location" hidden>
+  <div class="head"><span class="eyebrow">Location</span><h2>Find the depot</h2><p class="lede">The depot is in Pulivendula town, Kadapa (YSR) district, Andhra Pradesh. Open it in Maps for live directions from where you are.</p></div>
+  <div class="split">
+    <div class="tool">
+      <h3>Depot layout</h3>
+      <svg class="plan" viewBox="0 0 420 260" role="img" aria-label="Illustrative depot layout with six platforms, enquiry office, waiting hall and entry gate">
+        <rect x="6" y="6" width="408" height="248" rx="10" fill="none" stroke="var(--line)" stroke-width="2"/>
+        <rect x="22" y="22" width="130" height="62" rx="6" fill="var(--accent-soft)" stroke="var(--line)"/>
+        <text class="lbl" x="87" y="50" text-anchor="middle">Waiting hall</text>
+        <text x="87" y="66" text-anchor="middle">Seating, charging</text>
+        <rect x="168" y="22" width="110" height="62" rx="6" fill="var(--accent-soft)" stroke="var(--line)"/>
+        <text class="lbl" x="223" y="50" text-anchor="middle">Enquiry</text>
+        <text x="223" y="66" text-anchor="middle">Tickets, lost items</text>
+        <rect x="294" y="22" width="100" height="62" rx="6" fill="none" stroke="var(--line)" stroke-dasharray="4 4"/>
+        <text class="lbl" x="344" y="50" text-anchor="middle">Offices</text>
+        <text x="344" y="66" text-anchor="middle">Depot staff</text>
+        <g fill="var(--accent)">
+          <rect x="22" y="112" width="56" height="28" rx="4"/><rect x="88" y="112" width="56" height="28" rx="4"/><rect x="154" y="112" width="56" height="28" rx="4"/>
+          <rect x="220" y="112" width="56" height="28" rx="4"/><rect x="286" y="112" width="56" height="28" rx="4"/><rect x="352" y="112" width="42" height="28" rx="4"/>
+        </g>
+        <g fill="var(--accent-fg)" font-size="11" font-weight="600" text-anchor="middle" style="font-family:var(--font-mono)">
+          <text x="50" y="130" style="fill:var(--accent-fg)">P1</text><text x="116" y="130" style="fill:var(--accent-fg)">P2</text><text x="182" y="130" style="fill:var(--accent-fg)">P3</text>
+          <text x="248" y="130" style="fill:var(--accent-fg)">P4</text><text x="314" y="130" style="fill:var(--accent-fg)">P5</text><text x="373" y="130" style="fill:var(--accent-fg)">P6</text>
+        </g>
+        <path d="M22 175h372" stroke="var(--line)" stroke-width="2" stroke-dasharray="8 6"/>
+        <text x="208" y="168" text-anchor="middle">Bus lane</text>
+        <rect x="22" y="196" width="150" height="40" rx="6" fill="none" stroke="var(--line)"/>
+        <text class="lbl" x="97" y="220" text-anchor="middle">Parking</text>
+        <rect x="320" y="196" width="74" height="40" rx="6" fill="var(--accent-soft)" stroke="var(--line)"/>
+        <text class="lbl" x="357" y="220" text-anchor="middle">Entry gate</text>
       </svg>
-      <div><b>Lakeview College</b><small>Student registration · Batch 2027</small></div>
+      <p class="note">Illustrative layout, not to scale.</p>
     </div>
-
-    <div class="idcard" id="idcard">
-      <div class="idtop"><span>LAKEVIEW COLLEGE</span><span>BATCH 2027</span></div>
-      <div class="idbody">
-        <div class="idphoto"><span id="cardInitials">?</span><img id="cardImg" alt="" hidden></div>
-        <div class="idinfo">
-          <p class="idname" id="cardName">Your name</p>
-          <p class="idprog" id="cardProgram">Programme not chosen yet</p>
-          <p class="idmode" id="cardMode"></p>
-        </div>
-      </div>
-      <div class="idfoot"><span class="idno" id="cardId">LVC-27-•••••</span><i class="bars"></i></div>
+    <div class="tool">
+      <h3>Getting here</h3>
+      <ul class="list">
+        <li><div>Address<small>Bus Depot, Pulivendula, Kadapa (YSR) district, Andhra Pradesh 516390</small></div></li>
+        <li><div>Depot hours<small>Enquiry counter, sample hours</small></div><span class="mono">05:00 – 23:00</span></li>
+        <li><div>By auto or taxi<small>Ask for the bus stand or depot</small></div></li>
+        <li><div>On foot<small>Short walk from the town centre</small></div></li>
+      </ul>
+      <a class="btn" target="_blank" rel="noopener" href="https://www.google.com/maps/search/?api=1&query=bus+depot+Pulivendula">Open in Google Maps</a>
     </div>
+  </div>
+</section>
 
-    <ol class="rail" id="rail">
-      <li data-step="0"><span class="dot">1</span><span class="lbl"><b>Personal details</b><small>Identity and contact</small></span></li>
-      <li data-step="1"><span class="dot">2</span><span class="lbl"><b>Academics</b><small>Programme and last exam</small></span></li>
-      <li data-step="2"><span class="dot">3</span><span class="lbl"><b>Review</b><small>Check and submit</small></span></li>
-    </ol>
+<!-- NOTICES -->
+<section class="view" data-view="notices" hidden>
+  <div class="head"><span class="eyebrow">Notices</span><h2>Depot announcements</h2><p class="lede">Sample notices to show how updates would appear.</p></div>
+  <div class="tool" style="gap:0;padding-block:6px">
+    <div class="notice"><div class="date"><b>24</b><span>Oct</span></div><div><h3>Extra night services to Bengaluru</h3><p>Additional AC sleeper departures added on Fridays and Sundays through the festival season.</p></div></div>
+    <div class="notice"><div class="date"><b>18</b><span>Oct</span></div><div><h3>Platform change for Kadapa buses</h3><p>Kadapa express buses now board at platform 3. Look for the board near the waiting hall.</p></div></div>
+    <div class="notice"><div class="date"><b>09</b><span>Oct</span></div><div><h3>Enquiry counter timings</h3><p>The counter now opens at 5:00 in the morning to serve early departures.</p></div></div>
+    <div class="notice"><div class="date"><b>01</b><span>Oct</span></div><div><h3>Student pass renewals</h3><p>Bring your previous pass and a photo to the pass counter between 10:00 and 16:00.</p></div></div>
+  </div>
+</section>
 
-    <p class="sidenote">Registration is free. Fields marked <b>*</b> are required. Your ID card updates as you type.</p>
-  </aside>
+<!-- ABOUT -->
+<section class="view" data-view="about" hidden>
+  <div class="head"><span class="eyebrow">About</span><h2>About this demo</h2><p class="lede">A sample portal showing how a regional bus depot could present services, timings and contact details to passengers.</p></div>
+  <div class="grid">
+    <div class="card"><h3>What it covers</h3><p>Timetable, fares, depot location, notices, contact form and a demo sign-in with a sample account page.</p></div>
+    <div class="card"><h3>What is sample data</h3><p>All times, rates, distances, notices and phone numbers are placeholders. Check with the depot for real schedules.</p></div>
+    <div class="card"><h3>Not an official site</h3><p>This page is a design demo. It is not affiliated with APSRTC or any transport authority.</p></div>
+  </div>
+</section>
 
-  <main class="main" id="main">
-    <div id="formWrap">
-      <div class="head">
-        <p class="eyebrow" id="eyebrow">Step 1 of 3</p>
-        <h1 id="title" tabindex="-1">Tell us about yourself</h1>
-        <p id="lead">Use your name exactly as it appears on your previous marksheet.</p>
-      </div>
-
-      <form id="reg" novalidate autocomplete="on">
-        <!-- STEP 1 -->
-        <section class="step" data-step="0">
-          <div class="grid">
-            <div class="field" data-field="firstName">
-              <label for="firstName">First name <span class="req">*</span></label>
-              <input type="text" id="firstName" name="firstName" autocomplete="given-name" placeholder="e.g. Ananya" aria-describedby="firstName-err">
-              <p class="err" id="firstName-err" role="alert"></p>
-            </div>
-            <div class="field" data-field="lastName">
-              <label for="lastName">Last name <span class="req">*</span></label>
-              <input type="text" id="lastName" name="lastName" autocomplete="family-name" placeholder="e.g. Reddy" aria-describedby="lastName-err">
-              <p class="err" id="lastName-err" role="alert"></p>
-            </div>
-            <div class="field" data-field="dob">
-              <label for="dob">Date of birth <span class="req">*</span></label>
-              <input type="date" id="dob" name="dob" autocomplete="bday" aria-describedby="dob-err">
-              <p class="err" id="dob-err" role="alert"></p>
-            </div>
-            <div class="field" data-field="gender">
-              <span class="legend" id="gender-l">Gender <span class="req">*</span></span>
-              <div class="pills" role="radiogroup" aria-labelledby="gender-l" aria-describedby="gender-err">
-                <label class="pill"><input type="radio" name="gender" value="Female"><span>Female</span></label>
-                <label class="pill"><input type="radio" name="gender" value="Male"><span>Male</span></label>
-                <label class="pill"><input type="radio" name="gender" value="Other"><span>Other</span></label>
-              </div>
-              <p class="err" id="gender-err" role="alert"></p>
-            </div>
-            <div class="field" data-field="email">
-              <label for="email">Email address <span class="req">*</span></label>
-              <input type="email" id="email" name="email" autocomplete="email" placeholder="name@example.com" aria-describedby="email-err">
-              <p class="err" id="email-err" role="alert"></p>
-            </div>
-            <div class="field" data-field="phone">
-              <label for="phone">Mobile number <span class="req">*</span></label>
-              <input type="tel" id="phone" name="phone" inputmode="numeric" autocomplete="tel-national" placeholder="10-digit number" data-digits="10" aria-describedby="phone-err">
-              <p class="err" id="phone-err" role="alert"></p>
-            </div>
-
-            <div class="field span2">
-              <span class="legend">Passport-size photo</span>
-              <div class="photo">
-                <div class="avatar" id="avatar" aria-hidden="true">
-                  <svg id="avatarIcon" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c1-4 4-6 8-6s7 2 8 6"/></svg>
-                  <img id="avatarImg" alt="" hidden>
-                </div>
-                <div style="display:grid;gap:6px;">
-                  <div>
-                    <input type="file" id="photo" name="photo" accept="image/png,image/jpeg,image/webp" class="sr" aria-describedby="photo-hint photo-err">
-                    <label for="photo" class="btn btn-ghost btn-small" id="photoBtn" tabindex="0">Choose photo</label>
-                  </div>
-                  <p class="hint" id="photo-hint">Optional. JPG, PNG or WebP, up to 2 MB.</p>
-                  <p class="err" id="photo-err" role="alert"></p>
-                </div>
-              </div>
-            </div>
-
-            <h2 class="group-title">Guardian</h2>
-            <div class="field" data-field="guardian">
-              <label for="guardian">Parent or guardian name <span class="req">*</span></label>
-              <input type="text" id="guardian" name="guardian" placeholder="Full name" aria-describedby="guardian-err">
-              <p class="err" id="guardian-err" role="alert"></p>
-            </div>
-            <div class="field" data-field="guardianPhone">
-              <label for="guardianPhone">Guardian mobile <span class="req">*</span></label>
-              <input type="tel" id="guardianPhone" name="guardianPhone" inputmode="numeric" placeholder="10-digit number" data-digits="10" aria-describedby="guardianPhone-err">
-              <p class="err" id="guardianPhone-err" role="alert"></p>
-            </div>
-
-            <h2 class="group-title">Address</h2>
-            <div class="field span2" data-field="address">
-              <label for="address">Street address <span class="req">*</span></label>
-              <input type="text" id="address" name="address" autocomplete="street-address" placeholder="House no., street, area" aria-describedby="address-err">
-              <p class="err" id="address-err" role="alert"></p>
-            </div>
-            <div class="field" data-field="city">
-              <label for="city">City or town <span class="req">*</span></label>
-              <input type="text" id="city" name="city" autocomplete="address-level2" aria-describedby="city-err">
-              <p class="err" id="city-err" role="alert"></p>
-            </div>
-            <div class="field" data-field="state">
-              <label for="state">State <span class="req">*</span></label>
-              <select id="state" name="state" autocomplete="address-level1" aria-describedby="state-err"><option value="">Select state</option></select>
-              <p class="err" id="state-err" role="alert"></p>
-            </div>
-            <div class="field" data-field="pin">
-              <label for="pin">PIN code <span class="req">*</span></label>
-              <input type="text" id="pin" name="pin" inputmode="numeric" autocomplete="postal-code" placeholder="6 digits" data-digits="6" aria-describedby="pin-err">
-              <p class="err" id="pin-err" role="alert"></p>
-            </div>
-          </div>
-        </section>
-
-        <!-- STEP 2 -->
-        <section class="step" data-step="1" hidden>
-          <div class="grid">
-            <h2 class="group-title">Programme</h2>
-            <div class="field span2" data-field="program">
-              <label for="program">Programme applied for <span class="req">*</span></label>
-              <select id="program" name="program" aria-describedby="program-err">
-                <option value="">Select a programme</option>
-                <option>B.Tech, Computer Science &amp; Engineering</option>
-                <option>B.Tech, Electronics &amp; Communication</option>
-                <option>B.Sc, Computer Science</option>
-                <option>B.Sc, Mathematics</option>
-                <option>BCA, Computer Applications</option>
-                <option>B.Com, Commerce</option>
-                <option>BBA, Business Administration</option>
-                <option>B.A., Economics</option>
-              </select>
-              <p class="err" id="program-err" role="alert"></p>
-            </div>
-            <div class="field span2" data-field="mode">
-              <span class="legend" id="mode-l">Accommodation <span class="req">*</span></span>
-              <div class="pills" role="radiogroup" aria-labelledby="mode-l" aria-describedby="mode-err">
-                <label class="pill"><input type="radio" name="mode" value="Day scholar"><span>Day scholar</span></label>
-                <label class="pill"><input type="radio" name="mode" value="Hostel"><span>Hostel</span></label>
-              </div>
-              <p class="err" id="mode-err" role="alert"></p>
-            </div>
-
-            <h2 class="group-title">Previous education</h2>
-            <div class="field" data-field="qualification">
-              <label for="qualification">Qualification <span class="req">*</span></label>
-              <select id="qualification" name="qualification" aria-describedby="qualification-err">
-                <option value="">Select</option>
-                <option>Intermediate / Class 12</option>
-                <option>Diploma</option>
-                <option>Other equivalent</option>
-              </select>
-              <p class="err" id="qualification-err" role="alert"></p>
-            </div>
-            <div class="field" data-field="passYear">
-              <label for="passYear">Year of passing <span class="req">*</span></label>
-              <select id="passYear" name="passYear" aria-describedby="passYear-err"><option value="">Select year</option></select>
-              <p class="err" id="passYear-err" role="alert"></p>
-            </div>
-            <div class="field span2" data-field="institute">
-              <label for="institute">School or college attended <span class="req">*</span></label>
-              <input type="text" id="institute" name="institute" placeholder="Name of institution" aria-describedby="institute-err">
-              <p class="err" id="institute-err" role="alert"></p>
-            </div>
-            <div class="field" data-field="score">
-              <label for="score">Percentage obtained <span class="req">*</span></label>
-              <input type="number" id="score" name="score" inputmode="decimal" min="33" max="100" step="0.01" placeholder="e.g. 87.5" aria-describedby="score-err">
-              <p class="err" id="score-err" role="alert"></p>
-            </div>
-
-            <h2 class="group-title">Interests</h2>
-            <div class="field span2">
-              <span class="legend" id="int-l">Clubs you may want to join</span>
-              <div class="chips" role="group" aria-labelledby="int-l">
-                <label class="chip"><input type="checkbox" name="interests" value="Coding"><span>Coding</span></label>
-                <label class="chip"><input type="checkbox" name="interests" value="Robotics"><span>Robotics</span></label>
-                <label class="chip"><input type="checkbox" name="interests" value="Cricket"><span>Cricket</span></label>
-                <label class="chip"><input type="checkbox" name="interests" value="Music"><span>Music</span></label>
-                <label class="chip"><input type="checkbox" name="interests" value="Debate"><span>Debate</span></label>
-                <label class="chip"><input type="checkbox" name="interests" value="Photography"><span>Photography</span></label>
-                <label class="chip"><input type="checkbox" name="interests" value="Theatre"><span>Theatre</span></label>
-                <label class="chip"><input type="checkbox" name="interests" value="NSS volunteering"><span>NSS volunteering</span></label>
-              </div>
-              <p class="hint" id="int-hint">Pick up to 4.</p>
-            </div>
-          </div>
-        </section>
-
-        <!-- STEP 3 -->
-        <section class="step" data-step="2" hidden>
-          <div class="review" id="review"></div>
-          <div class="field" data-field="consent" style="margin-top:22px;">
-            <label class="check">
-              <input type="checkbox" id="consent" name="consent" aria-describedby="consent-err">
-              <span class="box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span>
-              <span class="txt">I confirm that the details above are correct and I agree to follow the college rules. <span class="req">*</span></span>
-            </label>
-            <p class="err" id="consent-err" role="alert"></p>
-          </div>
-        </section>
-
-        <div class="actions">
-          <button type="button" class="btn btn-ghost" id="backBtn" hidden>Back</button>
-          <span class="spacer"></span>
-          <button type="submit" class="btn btn-primary" id="nextBtn">Continue</button>
-        </div>
-      </form>
+<!-- CONTACT -->
+<section class="view" data-view="contact" hidden>
+  <div class="head"><span class="eyebrow">Contact</span><h2>Reach the depot</h2><p class="lede">Use the form for feedback or lost-property enquiries. In this demo nothing is sent.</p></div>
+  <div class="split">
+    <form class="tool" id="contactForm" novalidate>
+      <div class="field"><label for="cName">Your name</label><input id="cName" autocomplete="name"></div>
+      <div class="field"><label for="cTopic">Topic</label>
+        <select id="cTopic"><option>Timetable question</option><option>Lost property</option><option>Complaint or feedback</option><option>Pass renewal</option></select></div>
+      <div class="field"><label for="cMsg">Message</label><textarea id="cMsg"></textarea></div>
+      <button class="btn" type="submit">Send message</button>
+      <div class="msg" id="cOut" hidden></div>
+    </form>
+    <div class="tool">
+      <h3>Depot desk</h3>
+      <ul class="list">
+        <li><div>Helpline<small>Sample number</small></div><span class="mono">1800-000-0000</span></li>
+        <li><div>Email<small>Sample address</small></div><span class="mono">enquiry@example.com</span></li>
+        <li><div>Counter hours<small>Every day</small></div><span class="mono">05:00 – 23:00</span></li>
+      </ul>
     </div>
+  </div>
+</section>
 
-    <section class="success" id="success" hidden aria-live="polite">
-      <div class="tick" aria-hidden="true">
-        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>
-      </div>
-      <div class="head" style="margin:0;">
-        <p class="eyebrow">Registration complete</p>
-        <h1 id="successTitle" tabindex="-1">Welcome to Lakeview, <span id="successName"></span></h1>
-        <p>Keep this registration number. You will need it at the admissions desk.</p>
-      </div>
-      <div class="regno">
-        <div><small>Registration number</small><code id="regNo">LVC-27-00000</code></div>
-        <button type="button" class="btn btn-ghost btn-small" id="copyBtn">Copy number</button>
-      </div>
-      <div class="rsec"><header><h2>Summary</h2></header><dl id="successDl"></dl></div>
-      <button type="button" class="btn btn-primary" id="againBtn">Register another student</button>
-    </section>
-  </main>
-</div>
+<!-- LOGIN -->
+<section class="view" data-view="login" hidden>
+  <div class="tool login-box">
+    <div class="head"><span class="eyebrow">Demo sign-in</span><h2>Passenger login</h2></div>
+    <form id="loginForm" style="display:grid;gap:16px" novalidate>
+      <div class="field"><label for="lEmail">Email</label><input id="lEmail" type="email" autocomplete="off"></div>
+      <div class="field"><label for="lPass">Password</label><input id="lPass" type="password" autocomplete="off"></div>
+      <button class="btn" type="submit">Sign in</button>
+      <div class="msg err" id="lErr" hidden></div>
+    </form>
+    <div class="demo-cred">Demo account<br>Email: demo@example.com<br>Password: demo123</div>
+    <p class="note">This is a demo. Do not enter a real password. Nothing is sent or stored.</p>
+  </div>
+</section>
+
+<!-- ACCOUNT -->
+<section class="view" data-view="account" hidden>
+  <div class="head"><span class="eyebrow">My account</span><h2>Welcome, Demo Passenger</h2><p class="lede">Sample bookings and pass details for the demo account.</p></div>
+  <div class="grid">
+    <div class="card"><span class="tag sample">Sample booking</span><h3>Pulivendula to Bengaluru</h3><p>AC Sleeper, 1 passenger</p><span class="rate">Tomorrow, 21:45, platform 6</span></div>
+    <div class="card"><span class="tag sample">Sample booking</span><h3>Pulivendula to Kadapa</h3><p>Express, 2 passengers</p><span class="rate">Sat, 09:00, platform 3</span></div>
+    <div class="card"><span class="tag sample">Sample pass</span><h3>Student pass</h3><p>Valid on ordinary services within the district</p><span class="rate">Valid until 31 Dec 2026</span></div>
+  </div>
+  <div class="btns"><button class="btn ghost" id="logoutBtn" type="button">Log out</button></div>
+</section>
+
+</main>
+
+<footer>
+  <div>Pulivendula Bus Depot demo portal. Sample data for design preview only.</div>
+  <div>Not an official website and not affiliated with APSRTC. Confirm timings and fares with the depot.</div>
+</footer>
+<button id="backTop" type="button" aria-label="Back to top" title="Back to top">↑ Top</button>
 
 <script>
-(function () {
-  'use strict';
-
-  var $ = function (s, r) { return (r || document).querySelector(s); };
-  var $$ = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
-
-  var form = $('#reg');
-  var stepEls = $$('.step');
-  var railItems = $$('#rail li');
-  var LAST = stepEls.length - 1;
-  var current = 0;
-  var touched = {};
-  var photoData = '';
-  var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-  var heads = [
-    ['Tell us about yourself', 'Use your name exactly as it appears on your previous marksheet.'],
-    ['Your studies', 'Choose your programme and enter your last exam details.'],
-    ['Review and submit', 'Check everything once. Use Edit to fix anything that looks wrong.']
+(function(){
+  var ROUTES=[
+    {to:'Kadapa',km:75,type:'Express',plat:3,times:['05:30','07:15','09:00','11:30','14:00','16:45','19:15']},
+    {to:'Proddatur',km:85,type:'Ordinary',plat:1,times:['06:00','08:30','11:00','13:30','16:00','18:30']},
+    {to:'Tadipatri',km:70,type:'Ordinary',plat:2,times:['06:30','09:30','12:30','15:30','18:00']},
+    {to:'Anantapur',km:150,type:'Express',plat:4,times:['05:45','08:15','13:00','17:30']},
+    {to:'Rayachoti',km:80,type:'Ordinary',plat:2,times:['07:00','10:00','14:30','17:00']},
+    {to:'Tirupati',km:190,type:'Deluxe',plat:5,times:['06:15','10:45','15:00','20:00']},
+    {to:'Kurnool',km:190,type:'Deluxe',plat:5,times:['07:30','12:00','16:30']},
+    {to:'Bengaluru',km:270,type:'AC Sleeper',plat:6,times:['20:30','21:45','22:30']},
+    {to:'Hyderabad',km:400,type:'AC Sleeper',plat:6,times:['18:00','19:30','21:00']}
   ];
+  var VIEWS=['home','services','timetable','fares','location','notices','about','contact','login','account'];
+  var loggedIn=false;
+  var favorites=readFavorites();
+  var onlyFavorites=false;
 
-  var stepFields = [
-    ['firstName', 'lastName', 'dob', 'gender', 'email', 'phone', 'guardian', 'guardianPhone', 'address', 'city', 'state', 'pin'],
-    ['program', 'mode', 'qualification', 'passYear', 'institute', 'score'],
-    ['consent']
-  ];
+  function readFavorites(){try{return JSON.parse(localStorage.getItem('pulivendulaFavorites')||'[]');}catch(e){return [];}}
+  function saveFavorites(){try{localStorage.setItem('pulivendulaFavorites',JSON.stringify(favorites));}catch(e){}}
 
-  /* ---------- Fill selects ---------- */
-  var states = ['Andaman and Nicobar Islands', 'Andhra Pradesh', 'Arunachal Pradesh', 'Assam', 'Bihar', 'Chandigarh', 'Chhattisgarh', 'Delhi', 'Goa', 'Gujarat', 'Haryana', 'Himachal Pradesh', 'Jammu and Kashmir', 'Jharkhand', 'Karnataka', 'Kerala', 'Ladakh', 'Madhya Pradesh', 'Maharashtra', 'Manipur', 'Meghalaya', 'Mizoram', 'Nagaland', 'Odisha', 'Puducherry', 'Punjab', 'Rajasthan', 'Sikkim', 'Tamil Nadu', 'Telangana', 'Tripura', 'Uttar Pradesh', 'Uttarakhand', 'West Bengal'];
-  var stateSel = $('#state');
-  states.forEach(function (s) { var o = document.createElement('option'); o.textContent = s; stateSel.appendChild(o); });
-
-  var yearSel = $('#passYear');
-  var thisYear = new Date().getFullYear();
-  for (var y = thisYear; y >= thisYear - 5; y--) { var oy = document.createElement('option'); oy.textContent = y; yearSel.appendChild(oy); }
-
-  var dobEl = $('#dob');
-  var today = new Date();
-  function iso(d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
-  dobEl.max = iso(today);
-  dobEl.min = iso(new Date(today.getFullYear() - 70, 0, 1));
-
-  /* ---------- Validation ---------- */
-  var nameRe = /^[A-Za-z][A-Za-z .'\-]+$/;
-  var phoneRe = /^[6-9]\d{9}$/;
-
-  var rules = {
-    firstName: function (v) { return nameRe.test(v.trim()) ? '' : 'Enter your first name using letters only.'; },
-    lastName: function (v) { return nameRe.test(v.trim()) ? '' : 'Enter your last name using letters only.'; },
-    dob: function (v) {
-      if (!v) return 'Choose your date of birth.';
-      var d = new Date(v), n = new Date();
-      if (isNaN(d.getTime()) || d > n) return 'Date of birth cannot be in the future.';
-      var age = n.getFullYear() - d.getFullYear();
-      var m = n.getMonth() - d.getMonth();
-      if (m < 0 || (m === 0 && n.getDate() < d.getDate())) age--;
-      if (age < 16) return 'Applicants must be at least 16 years old.';
-      if (age > 60) return 'Check the year of birth.';
-      return '';
-    },
-    gender: function (v) { return v ? '' : 'Select one option.'; },
-    email: function (v) { return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v.trim()) ? '' : 'Enter a valid email, like name@example.com.'; },
-    phone: function (v) { return phoneRe.test(v) ? '' : 'Enter a 10-digit mobile number starting with 6, 7, 8 or 9.'; },
-    guardian: function (v) { return nameRe.test(v.trim()) ? '' : 'Enter your parent or guardian’s name.'; },
-    guardianPhone: function (v) { return phoneRe.test(v) ? '' : 'Enter a 10-digit mobile number starting with 6, 7, 8 or 9.'; },
-    address: function (v) { return v.trim().length >= 8 ? '' : 'Enter your full street address (at least 8 characters).'; },
-    city: function (v) { return v.trim().length >= 2 ? '' : 'Enter your city or town.'; },
-    state: function (v) { return v ? '' : 'Select your state.'; },
-    pin: function (v) { return /^[1-9]\d{5}$/.test(v) ? '' : 'Enter a valid 6-digit PIN code.'; },
-    program: function (v) { return v ? '' : 'Select the programme you are applying for.'; },
-    mode: function (v) { return v ? '' : 'Choose day scholar or hostel.'; },
-    qualification: function (v) { return v ? '' : 'Select your qualification.'; },
-    passYear: function (v) { return v ? '' : 'Select the year you passed.'; },
-    institute: function (v) { return v.trim().length >= 3 ? '' : 'Enter the name of your school or college.'; },
-    score: function (v) {
-      var n = parseFloat(v);
-      if (v === '' || isNaN(n)) return 'Enter your percentage.';
-      return (n >= 33 && n <= 100) ? '' : 'Enter a percentage between 33 and 100.';
-    },
-    consent: function (v) { return v ? '' : 'Tick the box to confirm before submitting.'; }
-  };
-
-  function getVal(name) {
-    var els = $$('[name="' + name + '"]', form);
-    if (!els.length) return '';
-    if (els[0].type === 'radio') { var r = els.filter(function (e) { return e.checked; })[0]; return r ? r.value : ''; }
-    if (els[0].type === 'checkbox') return els[0].checked ? 'yes' : '';
-    return els[0].value;
+  function toMin(t){var p=t.split(':');return +p[0]*60+ +p[1];}
+  function nowMin(){var d=new Date();return d.getHours()*60+d.getMinutes();}
+  function nextTime(times){
+    var n=nowMin();
+    for(var i=0;i<times.length;i++){if(toMin(times[i])>=n)return times[i];}
+    return times[0];
   }
 
-  function paint(name, msg) {
-    var wrap = $('[data-field="' + name + '"]');
-    var err = $('#' + name + '-err');
-    if (!wrap || !err) return;
-    err.textContent = msg;
-    wrap.classList.toggle('invalid', !!msg);
-    $$('[name="' + name + '"]', form).forEach(function (el) {
-      if (msg) el.setAttribute('aria-invalid', 'true'); else el.removeAttribute('aria-invalid');
+  function renderBoard(){
+    var d=new Date();
+    var hh=('0'+d.getHours()).slice(-2),mm=('0'+d.getMinutes()).slice(-2);
+    document.getElementById('clock').textContent=hh+':'+mm;
+    var n=nowMin(),list=[];
+    ROUTES.forEach(function(r){
+      r.times.forEach(function(t){
+        var diff=toMin(t)-n; if(diff<0)diff+=1440;
+        list.push({t:t,to:r.to,plat:r.plat,diff:diff});
+      });
     });
+    list.sort(function(a,b){return a.diff-b.diff;});
+    document.getElementById('boardRows').innerHTML=list.slice(0,5).map(function(x){
+      return '<div class="board-row"><span class="t">'+x.t+'</span><span class="d">'+x.to+'</span><span class="p">PLATFORM '+x.plat+'</span></div>';
+    }).join('');
   }
 
-  function check(name) {
-    var msg = rules[name](getVal(name));
-    paint(name, msg);
-    return msg === '';
+  function renderTimetable(){
+    var q=document.getElementById('ttSearch').value.trim().toLowerCase();
+    var ty=document.getElementById('ttType').value;
+    var rows=ROUTES.filter(function(r){return (!q||r.to.toLowerCase().indexOf(q)>-1)&&(!ty||r.type===ty)&&(!onlyFavorites||favorites.indexOf(r.to)>-1);});
+    document.getElementById('ttBody').innerHTML=rows.map(function(r){
+      var nx=nextTime(r.times);
+      var chips=r.times.map(function(t){return '<span'+(t===nx?' class="next"':'')+'>'+t+'</span>';}).join('');
+      var saved=favorites.indexOf(r.to)>-1;
+      return '<tr><td><b>'+r.to+'</b></td><td>'+r.type+'</td><td class="mono">~'+r.km+' km</td><td class="mono">P'+r.plat+'</td><td><div class="times">'+chips+'</div></td><td><button class="small-btn favorite-star" type="button" data-favorite="'+r.to+'" aria-pressed="'+saved+'" aria-label="'+(saved?'Remove ':'Save ')+r.to+' favourite">'+(saved?'★':'☆')+'</button></td></tr>';
+    }).join('')||'<tr><td colspan="6">No routes match. Try another destination or class.</td></tr>';
+    document.getElementById('ttCount').textContent=rows.length+' of '+ROUTES.length+' routes shown. Distances and times are sample data.';
+    document.getElementById('favoritesOnly').setAttribute('aria-pressed',String(onlyFavorites));
+    document.getElementById('favoritesOnly').textContent=onlyFavorites?'★ Showing saved routes':'☆ Saved routes only';
   }
 
-  function validateStep(i) {
-    var firstBad = null;
-    stepFields[i].forEach(function (n) {
-      touched[n] = true;
-      if (!check(n) && !firstBad) firstBad = n;
+  function renderFare(){
+    var r=ROUTES[+document.getElementById('fDest').value];
+    var rate=+document.getElementById('fType').value;
+    var pax=Math.max(1,Math.min(10,parseInt(document.getElementById('fPax').value,10)||1));
+    var per=Math.ceil(r.km*rate);
+    document.getElementById('fResult').textContent='₹'+(per*pax).toLocaleString('en-IN');
+    document.getElementById('fDetail').textContent='Pulivendula to '+r.to+', about '+r.km+' km. ₹'+per+' per passenger for '+pax+' passenger'+(pax>1?'s':'')+'.';
+  }
+
+  function route(){
+    var h=(location.hash||'#home').slice(1);
+    if(VIEWS.indexOf(h)<0)h='home';
+    if(h==='account'&&!loggedIn)h='login';
+    document.querySelectorAll('[data-view]').forEach(function(s){s.hidden=s.getAttribute('data-view')!==h;});
+    document.querySelectorAll('nav a').forEach(function(a){
+      if(a.getAttribute('href')==='#'+h)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');
     });
-    if (firstBad) {
-      var el = $('[name="' + firstBad + '"]', form);
-      if (el) el.focus();
-      return false;
-    }
-    return true;
+    window.scrollTo(0,0);
   }
 
-  /* ---------- Live ID card ---------- */
-  function initials(first, last) {
-    var a = (first || '').trim().charAt(0), b = (last || '').trim().charAt(0);
-    return (a + b).toUpperCase() || '?';
+  function syncAuth(){
+    var a=document.getElementById('authLink');
+    a.textContent=loggedIn?'My account':'Login';
+    a.setAttribute('href',loggedIn?'#account':'#login');
   }
 
-  function updateCard() {
-    var first = getVal('firstName'), last = getVal('lastName');
-    var full = (first.trim() + ' ' + last.trim()).trim();
-    $('#cardName').textContent = full || 'Your name';
-    $('#cardInitials').textContent = initials(first, last);
-    $('#cardProgram').textContent = getVal('program') || 'Programme not chosen yet';
-    $('#cardMode').textContent = getVal('mode');
-    var img = $('#cardImg');
-    if (photoData) { img.src = photoData; img.hidden = false; $('#cardInitials').hidden = true; }
-    else { img.hidden = true; img.removeAttribute('src'); $('#cardInitials').hidden = false; }
-  }
+  // fare dropdown
+  document.getElementById('fDest').innerHTML=ROUTES.map(function(r,i){return '<option value="'+i+'">'+r.to+'</option>';}).join('');
+  ['fDest','fType','fPax'].forEach(function(id){document.getElementById(id).addEventListener('input',renderFare);});
+  ['ttSearch','ttType'].forEach(function(id){document.getElementById(id).addEventListener('input',renderTimetable);});
 
-  /* ---------- Photo ---------- */
-  $('#photo').addEventListener('change', function (e) {
-    var f = e.target.files && e.target.files[0];
-    var err = $('#photo-err');
-    err.textContent = '';
-    if (!f) return;
-    if (!/^image\/(png|jpeg|webp)$/.test(f.type)) { err.textContent = 'Choose a JPG, PNG or WebP image.'; e.target.value = ''; return; }
-    if (f.size > 2 * 1024 * 1024) { err.textContent = 'That image is over 2 MB. Choose a smaller one.'; e.target.value = ''; return; }
-    var reader = new FileReader();
-    reader.onload = function () {
-      photoData = String(reader.result);
-      $('#avatarImg').src = photoData;
-      $('#avatarImg').hidden = false;
-      $('#avatarIcon').style.display = 'none';
-      $('#photoBtn').textContent = 'Change photo';
-      updateCard();
-    };
-    reader.onerror = function () { err.textContent = 'Could not read that file. Try another image.'; };
-    reader.readAsDataURL(f);
-  });
-  $('#photoBtn').addEventListener('keydown', function (e) {
-    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); $('#photo').click(); }
+  // Theme preference is saved only in this browser.
+  var themeButton=document.getElementById('themeToggle');
+  function applyTheme(theme){
+    document.documentElement.setAttribute('data-theme',theme);
+    themeButton.textContent=theme==='dark'?'☀️ Light':'🌙 Dark';
+    themeButton.setAttribute('aria-pressed',String(theme==='dark'));
+    try{localStorage.setItem('pulivendulaTheme',theme);}catch(e){}
+  }
+  var savedTheme='light';
+  try{savedTheme=localStorage.getItem('pulivendulaTheme')||'light';}catch(e){}
+  applyTheme(savedTheme==='dark'?'dark':'light');
+  themeButton.addEventListener('click',function(){
+    applyTheme(document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark');
   });
 
-  /* ---------- Input behaviour ---------- */
-  form.addEventListener('input', function (e) {
-    var t = e.target, name = t.name;
-    if (t.dataset && t.dataset.digits) {
-      t.value = t.value.replace(/\D/g, '').slice(0, parseInt(t.dataset.digits, 10));
-    }
-    if (rules[name] && touched[name]) check(name);
-    updateCard();
+  document.getElementById('ttBody').addEventListener('click',function(e){
+    var btn=e.target.closest('[data-favorite]');
+    if(!btn)return;
+    var dest=btn.getAttribute('data-favorite');
+    var idx=favorites.indexOf(dest);
+    if(idx>-1)favorites.splice(idx,1);else favorites.push(dest);
+    saveFavorites();renderTimetable();
+  });
+  document.getElementById('favoritesOnly').addEventListener('click',function(){onlyFavorites=!onlyFavorites;renderTimetable();});
+  document.getElementById('printTimetable').addEventListener('click',function(){window.print();});
+  document.getElementById('clearFilters').addEventListener('click',function(){
+    document.getElementById('ttSearch').value='';document.getElementById('ttType').value='';onlyFavorites=false;renderTimetable();
   });
 
-  form.addEventListener('change', function (e) {
-    var t = e.target, name = t.name;
-    if (name === 'interests') {
-      var picked = $$('input[name="interests"]:checked', form);
-      var hint = $('#int-hint');
-      if (picked.length > 4) { t.checked = false; hint.textContent = 'You can pick up to 4. Untick one to choose another.'; }
-      else hint.textContent = 'Pick up to 4.';
-    }
-    if (rules[name]) { touched[name] = true; check(name); }
-    updateCard();
-  });
-
-  form.addEventListener('focusout', function (e) {
-    var name = e.target.name;
-    if (rules[name] && e.target.type !== 'radio' && e.target.type !== 'checkbox') { touched[name] = true; check(name); }
-  });
-
-  /* ---------- Steps ---------- */
-  function go(n, init) {
-    current = n;
-    stepEls.forEach(function (s, i) { s.hidden = i !== n; });
-    railItems.forEach(function (li, i) {
-      li.classList.toggle('current', i === n);
-      li.classList.toggle('done', i < n);
-      $('.dot', li).textContent = i < n ? '✓' : String(i + 1);
-      if (i === n) li.setAttribute('aria-current', 'step'); else li.removeAttribute('aria-current');
-    });
-    $('#eyebrow').textContent = 'Step ' + (n + 1) + ' of ' + (LAST + 1);
-    $('#title').textContent = heads[n][0];
-    $('#lead').textContent = heads[n][1];
-    $('#backBtn').hidden = n === 0;
-    $('#nextBtn').textContent = n === LAST ? 'Submit registration' : 'Continue';
-    if (n === LAST) buildReview();
-    if (init) return;
-    $('#title').scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' });
-    $('#title').focus({ preventScroll: true });
-  }
-
-  function row(dl, k, v) {
-    var dt = document.createElement('dt'); dt.textContent = k;
-    var dd = document.createElement('dd'); dd.textContent = v || '—';
-    dl.appendChild(dt); dl.appendChild(dd);
-  }
-
-  function section(title, stepIndex, rows) {
-    var sec = document.createElement('div'); sec.className = 'rsec';
-    var head = document.createElement('header');
-    var h = document.createElement('h2'); h.textContent = title;
-    head.appendChild(h);
-    if (stepIndex !== null) {
-      var b = document.createElement('button');
-      b.type = 'button'; b.className = 'link-btn'; b.textContent = 'Edit';
-      b.setAttribute('aria-label', 'Edit ' + title.toLowerCase());
-      b.addEventListener('click', function () { go(stepIndex); });
-      head.appendChild(b);
-    }
-    sec.appendChild(head);
-    var dl = document.createElement('dl');
-    rows.forEach(function (r) { row(dl, r[0], r[1]); });
-    sec.appendChild(dl);
-    return sec;
-  }
-
-  function fullName() { return (getVal('firstName').trim() + ' ' + getVal('lastName').trim()).trim(); }
-
-  function buildReview() {
-    var box = $('#review');
-    box.textContent = '';
-    var interests = $$('input[name="interests"]:checked', form).map(function (e) { return e.value; }).join(', ');
-    box.appendChild(section('Personal details', 0, [
-      ['Name', fullName()], ['Date of birth', getVal('dob')], ['Gender', getVal('gender')],
-      ['Email', getVal('email')], ['Mobile', getVal('phone')],
-      ['Guardian', getVal('guardian') + ' (' + getVal('guardianPhone') + ')'],
-      ['Address', getVal('address') + ', ' + getVal('city') + ', ' + getVal('state') + ' ' + getVal('pin')]
-    ]));
-    box.appendChild(section('Academics', 1, [
-      ['Programme', getVal('program')], ['Accommodation', getVal('mode')],
-      ['Qualification', getVal('qualification') + ', ' + getVal('passYear')],
-      ['Institution', getVal('institute')], ['Percentage', getVal('score') + '%'],
-      ['Clubs', interests]
-    ]));
-  }
-
-  function newRegNo() {
-    var n = 0;
-    try { var a = new Uint32Array(1); crypto.getRandomValues(a); n = a[0] % 90000; }
-    catch (err) { n = Math.floor(Math.random() * 90000); }
-    return 'LVC-27-' + String(10000 + n);
-  }
-
-  function finish() {
-    var no = newRegNo();
-    /* TODO: send the form data to your server here, for example with fetch('/api/register', { method: 'POST', body: JSON.stringify(data) }) */
-    $('#successName').textContent = getVal('firstName').trim();
-    $('#regNo').textContent = no;
-    $('#cardId').textContent = no;
-    var dl = $('#successDl'); dl.textContent = '';
-    row(dl, 'Name', fullName());
-    row(dl, 'Programme', getVal('program'));
-    row(dl, 'Email', getVal('email'));
-    row(dl, 'Mobile', getVal('phone'));
-    railItems.forEach(function (li) { li.classList.remove('current'); li.classList.add('done'); $('.dot', li).textContent = '✓'; });
-    $('#formWrap').hidden = true;
-    $('#success').hidden = false;
-    $('#shell').classList.add('done');
-    $('#successTitle').scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' });
-    $('#successTitle').focus({ preventScroll: true });
-  }
-
-  form.addEventListener('submit', function (e) {
+  document.getElementById('loginForm').addEventListener('submit',function(e){
     e.preventDefault();
-    if (current < LAST) {
-      if (validateStep(current)) go(current + 1);
-      return;
-    }
-    for (var i = 0; i < LAST; i++) {
-      if (!validateStep(i)) { go(i); validateStep(i); return; }
-    }
-    if (validateStep(LAST)) finish();
-  });
-
-  $('#backBtn').addEventListener('click', function () { if (current > 0) go(current - 1); });
-
-  $('#copyBtn').addEventListener('click', function () {
-    var btn = this, no = $('#regNo').textContent;
-    function done(msg) { btn.textContent = msg; setTimeout(function () { btn.textContent = 'Copy number'; }, 1800); }
-    try {
-      navigator.clipboard.writeText(no).then(function () { done('Copied'); }, function () { select(); });
-    } catch (err) { select(); }
-    function select() {
-      var r = document.createRange(); r.selectNodeContents($('#regNo'));
-      var s = window.getSelection(); s.removeAllRanges(); s.addRange(r);
-      done('Press Ctrl+C');
+    var em=document.getElementById('lEmail').value.trim().toLowerCase();
+    var pw=document.getElementById('lPass').value;
+    var err=document.getElementById('lErr');
+    if(em==='demo@example.com'&&pw==='demo123'){
+      loggedIn=true;err.hidden=true;
+      document.getElementById('lPass').value='';
+      syncAuth();location.hash='#account';
+    }else{
+      err.hidden=false;
+      err.textContent='Email or password did not match. Use the demo account shown above the form.';
     }
   });
-
-  $('#againBtn').addEventListener('click', function () {
-    form.reset();
-    touched = {}; photoData = '';
-    $$('.field.invalid').forEach(function (f) { f.classList.remove('invalid'); });
-    $$('.err').forEach(function (p) { p.textContent = ''; });
-    $$('[aria-invalid]').forEach(function (el) { el.removeAttribute('aria-invalid'); });
-    $('#avatarImg').hidden = true; $('#avatarImg').removeAttribute('src');
-    $('#avatarIcon').style.display = '';
-    $('#photoBtn').textContent = 'Choose photo';
-    $('#cardId').textContent = 'LVC-27-•••••';
-    $('#shell').classList.remove('done');
-    $('#success').hidden = true;
-    $('#formWrap').hidden = false;
-    updateCard();
-    go(0);
+  document.getElementById('logoutBtn').addEventListener('click',function(){
+    loggedIn=false;syncAuth();location.hash='#home';
+  });
+  document.getElementById('contactForm').addEventListener('submit',function(e){
+    e.preventDefault();
+    var o=document.getElementById('cOut');
+    o.hidden=false;o.textContent='Demo form: your message was not sent anywhere.';
   });
 
-  go(0, true);
-  updateCard();
+  document.getElementById('backTop').addEventListener('click',function(){window.scrollTo({top:0,behavior:'smooth'});});
+  window.addEventListener('hashchange',route);
+  renderBoard();renderTimetable();renderFare();syncAuth();route();
+  setInterval(renderBoard,30000);
 })();
 </script>
+
 </body>
 </html>
